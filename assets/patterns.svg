@@ -61,7 +61,7 @@
     <path d="M1142,220 a20,8 0 0,1 40,0 v30 a20,8 0 0,1 -40,0 z" fill="none" stroke="#1a1a1a" stroke-width="2"/>
     <ellipse cx="1162" cy="220" rx="20" ry="8" fill="none" stroke="#1a1a1a" stroke-width="2"/>
     <text x="1162" y="288" font-size="16" fill="#8a8a8a" text-anchor="middle">main</text>
-    <text x="620" y="416" font-size="17" fill="#8a8a8a" text-anchor="middle">dispatch, steer, integrate, verify — all running in parallel from one context</text>
+    <text x="620" y="416" font-size="17" fill="#8a8a8a" text-anchor="middle">dispatch, steer, integrate, verify: all running in parallel from one context</text>
   </g>
 
   <!-- P1 Codex fleet -->
