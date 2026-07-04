@@ -1,71 +1,74 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1360 1690" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1360 1890" font-family="Helvetica Neue, Helvetica, Arial, sans-serif">
   <defs>
     <marker id="a" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 z" fill="#1a1a1a"/></marker>
     <marker id="ao" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 z" fill="#e2694e"/></marker>
     <marker id="ag" markerWidth="9" markerHeight="8" refX="8" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 z" fill="#b3b3b3"/></marker>
   </defs>
-  <rect width="1360" height="1690" fill="#faf7f0"/>
+  <rect width="1360" height="1890" fill="#faf7f0"/>
   <text x="60" y="82" font-size="44" font-weight="700" fill="#1a1a1a">Fable as conductor</text>
   <text x="60" y="116" font-size="21" fill="#8a8a8a">one session orchestrates the fleet: Codex implements, Opus designs and leads, worktrees keep writers parallel</text>
 
   <!-- HERO: all at once -->
   <g transform="translate(60,150)">
-    <rect width="1240" height="440" fill="#ffffff" stroke="#ddd8d0"/>
+    <rect width="1240" height="640" fill="#ffffff" stroke="#ddd8d0"/>
     <text x="30" y="52" font-size="26" font-weight="700" fill="#1a1a1a">The whole fleet, at once</text>
     <line x1="30" y1="80" x2="1210" y2="80" stroke="#ddd8d0"/>
-    <circle cx="150" cy="250" r="30" fill="#e2694e"/>
-    <text x="150" y="306" font-size="18" fill="#8a8a8a" text-anchor="middle">Fable</text>
+    <circle cx="150" cy="330" r="30" fill="#e2694e"/>
+    <text x="150" y="386" font-size="18" fill="#8a8a8a" text-anchor="middle">Fable</text>
     <!-- codex fleet column -->
-    <circle cx="400" cy="130" r="16" fill="#1e2a4a"/>
     <circle cx="400" cy="200" r="16" fill="#1e2a4a"/>
-    <circle cx="400" cy="270" r="16" fill="#1e2a4a"/>
-    <circle cx="400" cy="340" r="16" fill="#1e2a4a"/>
-    <text x="400" y="386" font-size="16" fill="#8a8a8a" text-anchor="middle">codex fleet</text>
-    <line x1="177" y1="238" x2="380" y2="138" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
-    <line x1="179" y1="244" x2="380" y2="203" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
-    <line x1="179" y1="256" x2="380" y2="267" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
-    <line x1="177" y1="262" x2="380" y2="332" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
-    <!-- opus design pair -->
-    <circle cx="620" cy="150" r="18" fill="none" stroke="#e2694e" stroke-width="3"/>
-    <circle cx="620" cy="250" r="18" fill="none" stroke="#e2694e" stroke-width="3"/>
-    <text x="620" y="300" font-size="16" fill="#8a8a8a" text-anchor="middle">opus design</text>
-    <path d="M178,236 C 320,150 480,140 596,148" fill="none" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
-    <path d="M180,254 C 330,270 470,258 596,251" fill="none" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
-    <!-- squad cluster -->
-    <circle cx="830" cy="150" r="18" fill="none" stroke="#e2694e" stroke-width="3"/>
-    <circle cx="940" cy="110" r="12" fill="#1e2a4a"/>
-    <circle cx="940" cy="150" r="12" fill="#1e2a4a"/>
-    <circle cx="940" cy="190" r="12" fill="#1e2a4a"/>
-    <circle cx="830" cy="310" r="18" fill="none" stroke="#e2694e" stroke-width="3"/>
-    <circle cx="940" cy="270" r="12" fill="#1e2a4a"/>
-    <circle cx="940" cy="310" r="12" fill="#1e2a4a"/>
-    <circle cx="940" cy="350" r="12" fill="#1e2a4a"/>
-    <text x="885" y="392" font-size="16" fill="#8a8a8a" text-anchor="middle">squads</text>
-    <path d="M178,240 C 400,90 640,90 806,140" fill="none" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
-    <path d="M180,260 C 400,380 640,370 806,318" fill="none" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
-    <line x1="847" y1="143" x2="925" y2="115" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#a)"/>
-    <line x1="849" y1="150" x2="925" y2="150" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#a)"/>
-    <line x1="847" y1="157" x2="925" y2="185" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#a)"/>
-    <line x1="847" y1="303" x2="925" y2="275" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#a)"/>
-    <line x1="849" y1="310" x2="925" y2="310" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#a)"/>
-    <line x1="847" y1="317" x2="925" y2="345" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#a)"/>
+    <circle cx="400" cy="280" r="16" fill="#1e2a4a"/>
+    <circle cx="400" cy="360" r="16" fill="#1e2a4a"/>
+    <circle cx="400" cy="440" r="16" fill="#1e2a4a"/>
+    <text x="400" y="492" font-size="16" fill="#8a8a8a" text-anchor="middle">codex fleet</text>
+    <line x1="177" y1="316" x2="380" y2="206" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
+    <line x1="179" y1="322" x2="380" y2="283" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
+    <line x1="179" y1="338" x2="380" y2="357" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
+    <line x1="177" y1="344" x2="380" y2="434" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
+    <!-- opus design pair, split to the outer bands -->
+    <circle cx="640" cy="140" r="18" fill="none" stroke="#e2694e" stroke-width="3"/>
+    <circle cx="640" cy="520" r="18" fill="none" stroke="#e2694e" stroke-width="3"/>
+    <text x="640" y="102" font-size="16" fill="#8a8a8a" text-anchor="middle">opus design</text>
+    <text x="640" y="572" font-size="16" fill="#8a8a8a" text-anchor="middle">opus design</text>
+    <path d="M176,318 C 320,150 480,110 618,146" fill="none" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M176,342 C 320,510 480,550 618,514" fill="none" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
+    <!-- squad clusters at the extremes -->
+    <circle cx="860" cy="120" r="18" fill="none" stroke="#e2694e" stroke-width="3"/>
+    <circle cx="960" cy="80" r="12" fill="#1e2a4a"/>
+    <circle cx="960" cy="120" r="12" fill="#1e2a4a"/>
+    <circle cx="960" cy="160" r="12" fill="#1e2a4a"/>
+    <circle cx="860" cy="540" r="18" fill="#1e2a4a"/>
+    <circle cx="960" cy="500" r="12" fill="#1e2a4a"/>
+    <circle cx="960" cy="540" r="12" fill="#1e2a4a"/>
+    <circle cx="960" cy="580" r="12" fill="#1e2a4a"/>
+    <text x="988" y="126" font-size="16" fill="#8a8a8a">opus-led squad</text>
+    <text x="988" y="546" font-size="16" fill="#8a8a8a">codex spawns codex</text>
+    <path d="M168,314 C 340,40 640,26 838,108" fill="none" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M168,346 C 340,614 640,626 838,552" fill="none" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
+    <line x1="876" y1="113" x2="945" y2="86" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#a)"/>
+    <line x1="878" y1="120" x2="945" y2="120" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#a)"/>
+    <line x1="876" y1="127" x2="945" y2="154" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#a)"/>
+    <line x1="876" y1="533" x2="945" y2="506" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#a)"/>
+    <line x1="878" y1="540" x2="945" y2="540" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#a)"/>
+    <line x1="876" y1="547" x2="945" y2="574" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#a)"/>
     <!-- convergence to integrator and main -->
-    <line x1="418" y1="205" x2="1042" y2="228" stroke="#c9c2b6" stroke-width="1.5"/>
-    <line x1="640" y1="253" x2="1042" y2="238" stroke="#c9c2b6" stroke-width="1.5"/>
-    <line x1="954" y1="160" x2="1044" y2="222" stroke="#c9c2b6" stroke-width="1.5"/>
-    <line x1="954" y1="300" x2="1044" y2="248" stroke="#c9c2b6" stroke-width="1.5"/>
-    <circle cx="1068" cy="235" r="24" fill="none" stroke="#1a1a1a" stroke-width="2.5"/>
-    <text x="1068" y="288" font-size="16" fill="#8a8a8a" text-anchor="middle">integrate,</text>
-    <text x="1068" y="308" font-size="16" fill="#8a8a8a" text-anchor="middle">verify</text>
-    <line x1="1092" y1="235" x2="1136" y2="235" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
-    <path d="M1142,220 a20,8 0 0,1 40,0 v30 a20,8 0 0,1 -40,0 z" fill="none" stroke="#1a1a1a" stroke-width="2"/>
-    <ellipse cx="1162" cy="220" rx="20" ry="8" fill="none" stroke="#1a1a1a" stroke-width="2"/>
-    <text x="1162" y="288" font-size="16" fill="#8a8a8a" text-anchor="middle">main</text>
-    <text x="620" y="416" font-size="17" fill="#8a8a8a" text-anchor="middle">dispatch, steer, integrate, verify: all running in parallel from one context</text>
+    <line x1="418" y1="288" x2="1054" y2="326" stroke="#c9c2b6" stroke-width="1.5"/>
+    <line x1="660" y1="146" x2="1056" y2="320" stroke="#c9c2b6" stroke-width="1.5"/>
+    <line x1="660" y1="514" x2="1056" y2="340" stroke="#c9c2b6" stroke-width="1.5"/>
+    <line x1="974" y1="128" x2="1058" y2="314" stroke="#c9c2b6" stroke-width="1.5"/>
+    <line x1="974" y1="532" x2="1058" y2="346" stroke="#c9c2b6" stroke-width="1.5"/>
+    <circle cx="1080" cy="330" r="24" fill="none" stroke="#1a1a1a" stroke-width="2.5"/>
+    <text x="1080" y="386" font-size="16" fill="#8a8a8a" text-anchor="middle">integrate,</text>
+    <text x="1080" y="406" font-size="16" fill="#8a8a8a" text-anchor="middle">verify</text>
+    <line x1="1104" y1="330" x2="1144" y2="330" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
+    <path d="M1150,315 a20,8 0 0,1 40,0 v30 a20,8 0 0,1 -40,0 z" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+    <ellipse cx="1170" cy="315" rx="20" ry="8" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+    <text x="1170" y="386" font-size="16" fill="#8a8a8a" text-anchor="middle">main</text>
+    <text x="620" y="616" font-size="17" fill="#8a8a8a" text-anchor="middle">dispatch, steer, integrate, verify: all running in parallel from one context</text>
   </g>
 
   <!-- P1 Codex fleet -->
-  <g transform="translate(60,630)">
+  <g transform="translate(60,830)">
     <rect width="600" height="430" fill="#ffffff" stroke="#ddd8d0"/>
     <rect x="30" y="26" width="36" height="36" fill="#e2694e"/><text x="48" y="51" font-size="22" font-weight="700" fill="#fff" text-anchor="middle">1</text>
     <text x="84" y="52" font-size="26" font-weight="700" fill="#1a1a1a">Codex fleet</text>
@@ -83,14 +86,15 @@
     <line x1="252" y1="236" x2="404" y2="202" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
     <line x1="252" y1="246" x2="404" y2="266" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
     <line x1="250" y1="252" x2="404" y2="334" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
-    <text x="466" y="196" font-size="18" fill="#8a8a8a">as many as</text>
-    <text x="466" y="220" font-size="18" fill="#8a8a8a">the campaign</text>
-    <text x="466" y="244" font-size="18" fill="#8a8a8a">needs</text>
-    <text x="300" y="392" font-size="17" fill="#8a8a8a" text-anchor="middle">headless codex workers, flat-rate, fire-and-collect</text>
+    <text x="462" y="184" font-size="18" fill="#8a8a8a">as many</text>
+    <text x="462" y="208" font-size="18" fill="#8a8a8a">codex workers</text>
+    <text x="462" y="232" font-size="18" fill="#8a8a8a">as the</text>
+    <text x="462" y="256" font-size="18" fill="#8a8a8a">campaign needs</text>
+    <text x="300" y="392" font-size="17" fill="#8a8a8a" text-anchor="middle">headless, flat-rate, fire-and-collect</text>
   </g>
 
   <!-- P2 Opus design workers -->
-  <g transform="translate(700,630)">
+  <g transform="translate(700,830)">
     <rect width="600" height="430" fill="#ffffff" stroke="#ddd8d0"/>
     <rect x="30" y="26" width="36" height="36" fill="#e2694e"/><text x="48" y="51" font-size="22" font-weight="700" fill="#fff" text-anchor="middle">2</text>
     <text x="84" y="52" font-size="26" font-weight="700" fill="#1a1a1a">Opus design workers</text>
@@ -103,12 +107,13 @@
     <text x="424" y="322" font-size="18" fill="#8a8a8a">design review</text>
     <line x1="162" y1="230" x2="364" y2="172" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
     <line x1="162" y1="250" x2="364" y2="308" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
-    <path d="M366,190 C 300,240 240,240 168,252" fill="none" stroke="#e2694e" stroke-width="2" stroke-dasharray="7,6" marker-end="url(#ao)"/>
+    <path d="M372,150 C 300,86 196,118 147,213" fill="none" stroke="#e2694e" stroke-width="2" stroke-dasharray="7,6" marker-end="url(#ao)"/>
+    <text x="252" y="102" font-size="15" fill="#e2694e" text-anchor="middle">steer</text>
     <text x="300" y="392" font-size="17" fill="#8a8a8a" text-anchor="middle">steerable mid-run: redirect instead of respawn</text>
   </g>
 
   <!-- P3 Squads -->
-  <g transform="translate(60,1100)">
+  <g transform="translate(60,1300)">
     <rect width="600" height="430" fill="#ffffff" stroke="#ddd8d0"/>
     <rect x="30" y="26" width="36" height="36" fill="#e2694e"/><text x="48" y="51" font-size="22" font-weight="700" fill="#fff" text-anchor="middle">3</text>
     <text x="84" y="52" font-size="26" font-weight="700" fill="#1a1a1a">Squads</text>
@@ -116,9 +121,9 @@
     <circle cx="95" cy="240" r="24" fill="#e2694e"/>
     <text x="95" y="290" font-size="18" fill="#8a8a8a" text-anchor="middle">Fable</text>
     <circle cx="255" cy="155" r="22" fill="none" stroke="#e2694e" stroke-width="3"/>
-    <circle cx="255" cy="325" r="22" fill="none" stroke="#e2694e" stroke-width="3"/>
+    <circle cx="255" cy="325" r="22" fill="#1e2a4a"/>
     <text x="255" y="122" font-size="17" fill="#8a8a8a" text-anchor="middle">opus lead</text>
-    <text x="255" y="382" font-size="17" fill="#8a8a8a" text-anchor="middle">opus lead</text>
+    <text x="255" y="382" font-size="17" fill="#8a8a8a" text-anchor="middle">codex lead</text>
     <line x1="116" y1="228" x2="231" y2="164" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
     <line x1="116" y1="252" x2="231" y2="316" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
     <circle cx="420" cy="105" r="15" fill="#1e2a4a"/>
@@ -135,12 +140,13 @@
     <line x1="276" y1="333" x2="400" y2="371" stroke="#1a1a1a" stroke-width="2" marker-end="url(#a)"/>
     <text x="462" y="160" font-size="18" fill="#8a8a8a">its own</text>
     <text x="462" y="184" font-size="18" fill="#8a8a8a">codex fleet</text>
-    <text x="462" y="330" font-size="18" fill="#8a8a8a">its own</text>
-    <text x="462" y="354" font-size="18" fill="#8a8a8a">codex fleet</text>
+    <text x="462" y="330" font-size="18" fill="#8a8a8a">its own native</text>
+    <text x="462" y="354" font-size="18" fill="#8a8a8a">subagents</text>
+    <text x="300" y="414" font-size="16" fill="#8a8a8a" text-anchor="middle">opus or codex can lead; codex spawns its own subagents</text>
   </g>
 
   <!-- P4 Worktrees + integration -->
-  <g transform="translate(700,1100)">
+  <g transform="translate(700,1300)">
     <rect width="600" height="430" fill="#ffffff" stroke="#ddd8d0"/>
     <rect x="30" y="26" width="36" height="36" fill="#e2694e"/><text x="48" y="51" font-size="22" font-weight="700" fill="#fff" text-anchor="middle">4</text>
     <text x="84" y="52" font-size="26" font-weight="700" fill="#1a1a1a">Worktrees, then integrate</text>
@@ -168,7 +174,7 @@
   </g>
 
   <!-- Legend -->
-  <g transform="translate(66,1618)">
+  <g transform="translate(66,1818)">
     <circle cx="12" cy="0" r="12" fill="#e2694e"/><text x="34" y="7" font-size="20" fill="#555">Fable conductor</text>
     <circle cx="232" cy="0" r="12" fill="none" stroke="#e2694e" stroke-width="3"/><text x="254" y="7" font-size="20" fill="#555">Claude Opus agent</text>
     <circle cx="482" cy="0" r="12" fill="#1e2a4a"/><text x="504" y="7" font-size="20" fill="#555">Codex worker</text>
