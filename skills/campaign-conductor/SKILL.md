@@ -281,16 +281,19 @@ Anything downstream of a task that might fail waits.
 A squad is one subagent acting as squad lead: it dispatches its own workers,
 integrates, verifies the integrated result, and returns one structured
 report. The squad absorbs the intermediate integration and per-worker diff
-reads that would otherwise land in the conductor's context. Two lead types:
+reads that would otherwise land in the conductor's context. Any worker that
+can dispatch, integrate, and verify can lead; compose whatever shape the
+sub-goal calls for. Two worked examples:
 
-- **Claude lead** (Opus or Sonnet): dispatches codex workers via `codex
-  exec`, one worktree per leaf. Use when the sub-goal needs judgment or
-  mid-flight steering of the squad itself.
-- **Codex lead**: uses its native `multi_agent_v1` tools (`spawn_agent`,
-  `wait_agent`, `send_input`, `close_agent`) to run parallel subagents that
-  share its single workspace. Use for mechanical fan-outs within one
-  worktree (per-file migrations, batch transforms); give the lead one
-  worktree and have its brief assign disjoint files to each subagent.
+- A **Claude lead** (Opus or Sonnet) dispatching codex workers via `codex
+  exec`, one worktree per leaf. A natural fit when the sub-goal needs design
+  judgment or mid-flight steering of the squad itself.
+- A **Codex lead** fanning out its native `multi_agent_v1` subagents
+  (`spawn_agent`, `wait_agent`, `send_input`, `close_agent`), which share
+  its single workspace. A natural fit for mechanical fan-outs in one
+  worktree, with the brief assigning disjoint files to each subagent.
+
+The rules below hold for every shape.
 
 Dispatch a squad when a phase contains a cohesive sub-goal of **three or more
 codex tasks that must integrate with each other** before the conductor needs
