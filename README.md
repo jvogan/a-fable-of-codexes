@@ -4,6 +4,10 @@
 
 # A Fable of Codexes
 
+[![validate](https://github.com/jvogan/a-fable-of-codexes/actions/workflows/validate.yml/badge.svg)](https://github.com/jvogan/a-fable-of-codexes/actions/workflows/validate.yml)
+[![Agent Skills spec](https://img.shields.io/badge/agent%20skills-spec%20compliant-4c8?labelColor=333)](https://agentskills.io/specification)
+[![license](https://img.shields.io/badge/license-MIT-blue?labelColor=333)](LICENSE)
+
 Claude Code skills for orchestrating mixed fleets of AI workers. Claude runs
 the project as conductor: it surveys and plans, dispatches Claude (Opus)
 agents for design judgment and OpenAI Codex CLI workers for implementation —
@@ -47,7 +51,19 @@ Runs a project as an orchestrated campaign.
   at session start.
 
 [`examples/campaign-hq/`](examples/campaign-hq/) shows the state files
-mid-campaign.
+mid-campaign, including a worked worker brief and the report schema.
+
+### How a campaign runs
+
+```mermaid
+flowchart LR
+    A[Survey and plan] --> B[Dispatch wave:<br>worktree + branch<br>per worker]
+    B --> C[Collect<br>structured reports]
+    C --> D[Integrate branches]
+    D --> E[Verify<br>integrated result]
+    E -->|next wave| B
+    E -->|phases done| F[Campaign complete]
+```
 
 ## Install
 
@@ -61,6 +77,20 @@ or manually:
 git clone --depth 1 https://github.com/jvogan/a-fable-of-codexes.git /tmp/afoc
 cp -r /tmp/afoc/skills/campaign-conductor ~/.claude/skills/
 ```
+
+## Use
+
+Install the skill, then say in any project:
+
+> start a campaign
+
+Claude bootstraps `docs/campaign-hq/`, sizes the plan to the project, and
+begins dispatching workers. From then on, every session in that repo picks up
+the campaign automatically. Direct it in plain language:
+
+- "add a phase for the billing migration"
+- "use sonnet for tests from now on" — persists in `preferences.md`
+- "status" — reads the plan and fleet table
 
 ## Requirements
 
