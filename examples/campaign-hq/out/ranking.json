@@ -1,0 +1,16 @@
+{
+  "status": "done",
+  "branch": "campaign/ranking",
+  "commit": "9c41d7e",
+  "files_changed": [
+    "src/search/engine.ts",
+    "src/search/rank.ts",
+    "src/search/rank.test.ts"
+  ],
+  "verify_cmd": "npm test -- ranking",
+  "verify_result": {
+    "passed": true,
+    "output_tail": "Tests: 14 passed, 14 total\nTime: 3.2s"
+  },
+  "blockers": []
+}

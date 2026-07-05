@@ -126,7 +126,8 @@ closest available policy.
 - Every writer branch must end with a commit. Uncommitted worker output is
   invisible to integration.
 - Record each active dispatch in the `CAMPAIGN.md` fleet table: task, worker,
-  branch, worktree, session id, dispatch time, expected duration, status.
+  branch, worktree, session id, dispatch time, and status (with expected
+  duration while the worker runs).
 - Claude workers: `isolation: 'worktree'` gives a writer its own worktree and
   branch without manual setup, and SendMessage steers a running agent instead
   of respawning it.

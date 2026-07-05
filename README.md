@@ -14,6 +14,11 @@ dispatches many parallel OpenAI Codex CLI workers for implementation and
 Claude Opus agents for design judgment, then integrates, reviews, and verifies
 what comes back.
 
+One session directs the whole effort: workers spend their own context on
+implementation while the conductor's stays free for judgment, git worktrees
+let many writers land in parallel without collisions, and campaign state
+lives in the repo so any later session resumes mid-campaign without setup.
+
 ## Skills
 
 ### [campaign-conductor](skills/campaign-conductor/SKILL.md)

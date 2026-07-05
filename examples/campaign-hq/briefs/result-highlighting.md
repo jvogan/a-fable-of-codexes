@@ -17,5 +17,7 @@ before you commit.
 
 Commit your work on this branch with message `campaign/highlight: <summary>`.
 
+Do not spawn subagents; this task is sized for one worker.
+
 Report per the output schema: status, branch, commit, files_changed,
 verify_cmd, verify_result, blockers.
