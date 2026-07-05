@@ -12,7 +12,7 @@
   <g transform="translate(60,150)">
     <rect width="1240" height="640" fill="#ffffff" stroke="#ddd8d0"/>
     <text x="30" y="52" font-size="26" font-weight="700" fill="#1a1a1a">The whole fleet, at once</text>
-    <line x1="30" y1="80" x2="1210" y2="80" stroke="#ddd8d0"/>
+    <line x1="30" y1="80" x2="440" y2="80" stroke="#ddd8d0"/>
     <circle cx="150" cy="330" r="30" fill="#e2694e"/>
     <text x="150" y="386" font-size="18" fill="#8a8a8a" text-anchor="middle">Fable</text>
     <!-- codex fleet column -->
