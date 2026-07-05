@@ -6,6 +6,7 @@
 
 [![validate](https://github.com/jvogan/a-fable-of-codexes/actions/workflows/validate.yml/badge.svg)](https://github.com/jvogan/a-fable-of-codexes/actions/workflows/validate.yml)
 [![Agent Skills spec](https://img.shields.io/badge/agent%20skills-spec%20compliant-4c8?labelColor=333)](https://agentskills.io/specification)
+[![release](https://img.shields.io/github/v/release/jvogan/a-fable-of-codexes?labelColor=333&color=e2694e)](https://github.com/jvogan/a-fable-of-codexes/releases)
 [![license](https://img.shields.io/badge/license-MIT-blue?labelColor=333)](LICENSE)
 
 Claude Code skills that make Claude (Fable, or Opus when Fable is unavailable)
