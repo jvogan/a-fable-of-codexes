@@ -11,3 +11,4 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: python3 scripts/validate.py
+      - run: npx --yes skills add . --list

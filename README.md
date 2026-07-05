@@ -8,10 +8,11 @@
 [![Agent Skills spec](https://img.shields.io/badge/agent%20skills-spec%20compliant-4c8?labelColor=333)](https://agentskills.io/specification)
 [![license](https://img.shields.io/badge/license-MIT-blue?labelColor=333)](LICENSE)
 
-Claude Code skills that make Claude (Fable) the conductor of an AI worker
-fleet. The conductor surveys and plans, dispatches many parallel OpenAI Codex
-CLI workers for implementation and Claude Opus agents for design judgment,
-then integrates, reviews, and verifies what comes back.
+Claude Code skills that make Claude (Fable, or Opus when Fable is unavailable)
+the conductor of an AI worker fleet. The expensive Claude session handles
+surveying, planning, integration judgment, verification, and memory while
+delegating implementation, tests, research, and mechanical refactors to Codex
+CLI or Claude worker agents.
 
 ## Skills
 
@@ -19,16 +20,16 @@ then integrates, reviews, and verifies what comes back.
 
 Runs a project as an orchestrated campaign.
 
-- **Bootstrap.** First use in a repo creates `docs/campaign-hq/`
-  (`CAMPAIGN.md` with the plan and fleet table, `LEARNINGS.md` with distilled
-  lessons, `preferences.md` with worker routing) and adds a pointer to the
-  project's CLAUDE.md. Every later session auto-discovers the campaign from
-  the repo; the skill loads once per project.
-- **Routing.** Opus for UI/UX and design judgment; Codex workers for
-  implementation, tests, and research; native subagents for quick searches.
-  Every worker defaults to the strongest configured model and reasoning;
-  downshifts happen only on user preference. Stated preferences are written
-  to `preferences.md` and persist across sessions.
+- **Bootstrap.** First use in a repo copies templates from
+  `assets/campaign-hq/` into `docs/campaign-hq/`: `CAMPAIGN.md` for the plan
+  and fleet table, `LEARNINGS.md` for distilled lessons, `preferences.md` for
+  worker routing, and `schemas/worker-result.json` for reports. It also adds a
+  pointer to the project's CLAUDE.md so later sessions resume from repo state.
+- **Routing.** Fable/Opus stays on planning, judgment, verification, and memory.
+  Codex CLI handles implementation, tests, research, and mechanical refactors
+  when available. Claude worker agents use the same briefs and reports when
+  Codex is unavailable or exhausted. Live worker, model, and effort requests win
+  over defaults, are written to `preferences.md`, and persist across sessions.
 - **Campaign sizing.** Small projects get a directly written plan. Large or
   unfamiliar ones get a parallel survey fan-out that drafts the plan for
   sign-off first.
@@ -53,6 +54,9 @@ Runs a project as an orchestrated campaign.
 - **Compounding memory.** Every dispatch outcome and user correction is
   logged, then compacted into standing rules so the files stay cheap to read
   at session start.
+- **Progressive disclosure.** The main SKILL.md is a short conductor checklist.
+  Detailed Codex dispatch, worktree/wave operations, squads, and review gates
+  live in `references/` and load only when needed.
 
 [`examples/campaign-hq/`](examples/campaign-hq/) shows the state files
 mid-campaign, including a worked worker brief and the report schema.
@@ -89,6 +93,7 @@ docs/campaign-hq/
 ├── LEARNINGS.md     standing rules + dispatch log
 ├── preferences.md   worker routing, permission envelope
 ├── briefs/          one file per dispatch
+├── out/             collected worker reports
 └── schemas/         worker-result.json
 ```
 
@@ -124,15 +129,10 @@ the campaign automatically. Direct it in plain language:
 - **Claude Code.** The skill uses the Agent and Workflow tools.
 - **OpenAI Codex CLI** ([github.com/openai/codex](https://github.com/openai/codex)).
   Install with `npm install -g @openai/codex` (or `brew install codex`), then
-  run `codex login` with a ChatGPT account. Subscription auth gives flat-rate
-  workers; wide fan-out assumes a Pro-tier plan, since lower tiers carry
-  weekly limits. Set the worker model and
-  reasoning effort in `~/.codex/config.toml`:
-
-  ```toml
-  model = "gpt-5.5"
-  model_reasoning_effort = "xhigh"
-  ```
+  run `codex login`. ChatGPT-plan auth consumes plan usage and limits vary by
+  plan; API-key auth is token-priced. Size worker waves to the user's available
+  limits and spend tolerance. Configure model and reasoning effort globally or
+  per dispatch when the project needs it.
 
   Without Codex installed, the skill runs Claude-only fleets: Sonnet workers
   take the implementation role, Opus keeps design and squad-lead duty, and
@@ -151,13 +151,15 @@ the campaign automatically. Direct it in plain language:
 
 ```bash
 python3 scripts/validate.py
+npx --yes skills add . --list
 ```
 
 Checks every skill against the
 [Agent Skills spec](https://agentskills.io/specification): frontmatter
 fields, name format, and description length, plus this repo's 500-line body
-limit and relative-link integrity. CI runs the same script on every push and
-pull request.
+limit and relative-link integrity. The `skills` command verifies that the
+package is discoverable by the installer. CI runs both commands on every push
+and pull request.
 
 ## License
 

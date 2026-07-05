@@ -2,7 +2,9 @@
 <!-- Precedence: user's live instruction > this file > skill defaults.
      Update this file whenever the user states a preference. -->
 - UI/UX, design: claude opus, high effort
-- Implementation, tests, research: codex CLI, highest reasoning (two accounts; split waves across both)
+- Conductor: Fable when available, otherwise claude opus at high effort
+- Implementation, tests, research: codex CLI when available; split waves across configured accounts only within current usage limits
+- Model/effort overrides: user's live request wins; record requested worker, model, and reasoning level before dispatch
 - Quick search: native subagents
 - Integration: opus for UI-adjacent merges, codex for mechanical merges
 - Check-in cadence: phase boundaries; ping immediately if the index size budget fails

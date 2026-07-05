@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "worker-result",
+  "type": "object",
+  "required": ["status", "branch", "commit", "files_changed", "verify_cmd", "verify_result", "blockers"],
+  "properties": {
+    "status": { "enum": ["done", "partial", "blocked", "failed"] },
+    "branch": { "type": "string" },
+    "commit": { "type": "string", "description": "sha of the final commit; empty if none" },
+    "files_changed": { "type": "array", "items": { "type": "string" } },
+    "verify_cmd": { "type": "string" },
+    "verify_result": {
+      "type": "object",
+      "required": ["passed", "output_tail"],
+      "properties": {
+        "passed": { "type": "boolean" },
+        "output_tail": { "type": "string" }
+      }
+    },
+    "blockers": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}
