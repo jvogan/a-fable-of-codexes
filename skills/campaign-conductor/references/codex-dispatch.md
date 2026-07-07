@@ -50,11 +50,19 @@ Use `read-only` for scouts and reviewers. Use `workspace-write` for writers.
 Keep network on only when the task needs dependency installation, package docs,
 or live research.
 
+Never dispatch with `approval_policy=never`: it removes the approval gate
+entirely, and host permission systems (including Claude Code's classifier)
+rightly deny it for unattended runs. Use `on-request` with the auto reviewer
+instead — escalations get reviewed by a model gate rather than waved through.
+The values contain hyphens/underscores, so quote them as TOML strings:
+`-c 'approval_policy="on-request"' -c 'approvals_reviewer="auto_review"'`.
+
 One writer:
 
 ```bash
 codex exec --json -s workspace-write \
-  -c approval_policy=never \
+  -c 'approval_policy="on-request"' \
+  -c 'approvals_reviewer="auto_review"' \
   -c sandbox_workspace_write.network_access=true \
   --output-schema docs/campaign-hq/schemas/worker-result.json \
   -C <worktree> \
@@ -66,7 +74,8 @@ Read-only scout with live web search:
 
 ```bash
 codex exec --json --search -s read-only \
-  -c approval_policy=never \
+  -c 'approval_policy="on-request"' \
+  -c 'approvals_reviewer="auto_review"' \
   -C <repo> \
   -o docs/campaign-hq/out/<task>.json \
   - < docs/campaign-hq/briefs/<task>.md
@@ -76,7 +85,8 @@ Second Codex home, when the user has configured one:
 
 ```bash
 CODEX_HOME="$HOME/.codex-account2" codex exec --json -s workspace-write \
-  -c approval_policy=never \
+  -c 'approval_policy="on-request"' \
+  -c 'approvals_reviewer="auto_review"' \
   -c sandbox_workspace_write.network_access=true \
   --output-schema docs/campaign-hq/schemas/worker-result.json \
   -C <worktree> \
