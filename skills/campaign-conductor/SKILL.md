@@ -14,7 +14,7 @@ license: MIT
 compatibility: Designed for Claude Code with Fable or Opus as conductor. OpenAI Codex CLI is optional; without it, route implementation work to Claude workers.
 metadata:
   author: jvogan
-  version: "0.6.1"
+  version: "0.6.2"
 ---
 
 # Campaign Conductor

@@ -65,17 +65,25 @@ codex exec --json -s workspace-write \
 Read-only scout with live web search:
 
 ```bash
-codex exec --json --search -s read-only \
+codex exec --json -s read-only \
   -c approval_policy=never \
+  -c web_search=live \
   -C <repo> \
   -o docs/campaign-hq/out/<task>.json \
   - < docs/campaign-hq/briefs/<task>.md
 ```
 
+`codex exec` enables web search by default, but in `cached` mode (an
+OpenAI-maintained index, no live fetch), so a scout needing the live web must
+set `web_search=live`. Values are `live`, `indexed`, `cached`, and `disabled`;
+set it per call with `-c web_search=<mode>` or as a top-level config key.
+`codex exec` has no `--search` flag; the interactive `codex` command still does.
+Check `codex exec --help` for the version in use.
+
 Second Codex home, when the user has configured one:
 
 ```bash
-CODEX_HOME="$HOME/.codex-account2" codex exec --json -s workspace-write \
+CODEX_HOME="<second-codex-home>" codex exec --json -s workspace-write \
   -c approval_policy=never \
   -c sandbox_workspace_write.network_access=true \
   --output-schema docs/campaign-hq/schemas/worker-result.json \
@@ -89,16 +97,27 @@ fail quickly instead of running outside the intended repo.
 
 ## Model And Effort
 
-Default every worker to the strongest model and reasoning the user's config
-provides; a cheap model on a real task produces rework, and architecture,
-debugging, and judging always run at highest effort. A live user request for a
-specific model or reasoning level wins. Do not silently "upgrade" or
-"downgrade" that request to the default policy.
+Three independent controls set a worker's cost and quality: the model variant
+(frontier, balanced, or fast/cheap), the reasoning effort (a ladder that climbs
+past `high` through `xhigh`, `max`, and `ultra`), and any separate fast-serving
+mode the CLI exposes. Not every model accepts every effort tier.
 
-Prefer per-call flags such as `-m <model> -c model_reasoning_effort=<level>`
-when a single task needs a different policy; do not rewrite the user's global
-config unless asked. If a requested model or effort value is unavailable, stop
-and record the limitation instead of pretending the requested policy was used.
+Match effort to difficulty instead of maxing every task. A mid tier (`high`) on
+the frontier model is a sound default: a modern frontier model is strong well
+below its top tier, so reserve `max`/`ultra` for work that earns it (thorny
+architecture, deep debugging, high-stakes correctness, final arbitration, or a
+task that already failed at a lower tier), and route mechanical or throughput
+work to a faster variant or lower effort. A cheap model on genuinely hard work
+produces rework, so do not under-provision either.
+
+Precedence is the user's live request, then a task-specific policy, then
+configured defaults, bounded by what the active CLI and account support. A live
+request for a specific model or effort wins; do not silently "upgrade" or
+"downgrade" it. Prefer per-call flags such as `-m <model> -c
+model_reasoning_effort=<level>` when one task needs a different policy; do not
+rewrite the user's global config unless asked. If a requested model or effort
+value is unavailable, stop and record the limitation instead of pretending the
+requested policy was used.
 
 Avoid hard-coded model names in briefs unless they come from `preferences.md` or
 the user just specified them. When the user specifies a model or effort policy,
@@ -109,7 +128,7 @@ write it into the brief and the fleet table.
 | Capability | Invocation | Campaign use |
 |---|---|---|
 | Structured final report | `--output-schema docs/campaign-hq/schemas/worker-result.json` | machine-checkable collection |
-| Live web search | `--search` | volatile facts, current APIs, advisories, versions |
+| Live web search | `-c web_search=live` (default is `cached`, an index with no live fetch; `codex exec` has no `--search` flag) | volatile facts, current APIs, advisories, versions |
 | Image input | `-i current.png -i target.png` | UI bug reproduction from screenshots and mocks |
 | Image generation | prompt the built-in `image_gen` tool | asset generation; the tool saves under `~/.codex/generated_images/<session>/`, so the brief must require copying the file into the repo and verifying it exists |
 | Review mode | `codex exec review --base <ref>` | read-only review gate |
