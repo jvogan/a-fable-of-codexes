@@ -145,9 +145,16 @@ the campaign automatically. Direct it in plain language:
   effort in `~/.codex/config.toml`, for example:
 
   ```toml
-  model = "gpt-5.5"
-  model_reasoning_effort = "xhigh"
+  model = "gpt-5.6-sol"
+  model_reasoning_effort = "high"
   ```
+
+  Reasoning runs a ladder (`low`, `medium`, `high`, `xhigh`, `max`, `ultra`),
+  and the model ships in frontier, balanced, and fast variants. `high` on the
+  frontier model is a sound default; reserve `max`/`ultra` for the hardest
+  architecture and debugging. Override per task in plain language ("use ultra
+  Codex for this wave", "send the mechanical refactor to the fast model"): the
+  conductor writes the request to `preferences.md`, where it persists.
 
   Without Codex installed, the skill runs Claude-only fleets: Sonnet workers
   take the implementation role, Opus keeps design and squad-lead duty, and
