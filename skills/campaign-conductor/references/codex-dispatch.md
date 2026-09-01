@@ -52,6 +52,12 @@ or live research. `workspace-write` keeps `.git` read-only, so a brief that
 requires a commit needs the worktree's `.git` in `writable_roots`; without it
 the worker cannot create `.git/index.lock`.
 
+`approval_policy=never` keeps the envelope fixed: anything the sandbox blocks
+fails instead of asking. If a host blocks `never` for unattended runs,
+`--approve-for-me` routes escalation requests through Codex's automatic
+reviewer. Record that choice in `preferences.md`, since it lets a model widen
+the envelope mid-run.
+
 One writer:
 
 ```bash
