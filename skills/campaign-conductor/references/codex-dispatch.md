@@ -48,7 +48,9 @@ run without follow-up questions.
 
 Use `read-only` for scouts and reviewers. Use `workspace-write` for writers.
 Keep network on only when the task needs dependency installation, package docs,
-or live research.
+or live research. `workspace-write` keeps `.git` read-only, so a brief that
+requires a commit needs the worktree's `.git` in `writable_roots`; without it
+the worker cannot create `.git/index.lock`.
 
 One writer:
 
@@ -56,6 +58,7 @@ One writer:
 codex exec --json -s workspace-write \
   -c approval_policy=never \
   -c sandbox_workspace_write.network_access=true \
+  -c 'sandbox_workspace_write.writable_roots=["<worktree>/.git"]' \
   --output-schema docs/campaign-hq/schemas/worker-result.json \
   -C <worktree> \
   -o docs/campaign-hq/out/<task>.json \
@@ -86,6 +89,7 @@ Second Codex home, when the user has configured one:
 CODEX_HOME="<second-codex-home>" codex exec --json -s workspace-write \
   -c approval_policy=never \
   -c sandbox_workspace_write.network_access=true \
+  -c 'sandbox_workspace_write.writable_roots=["<worktree>/.git"]' \
   --output-schema docs/campaign-hq/schemas/worker-result.json \
   -C <worktree> \
   -o docs/campaign-hq/out/<task>.json \
@@ -107,8 +111,16 @@ the frontier model is a sound default: a modern frontier model is strong well
 below its top tier, so reserve `max`/`ultra` for work that earns it (thorny
 architecture, deep debugging, high-stakes correctness, final arbitration, or a
 task that already failed at a lower tier), and route mechanical or throughput
-work to a faster variant or lower effort. A cheap model on genuinely hard work
-produces rework, so do not under-provision either.
+work to a faster variant. A cheap model on genuinely hard work produces rework,
+so do not under-provision either.
+
+The default when the user has specified nothing: `gpt-5.6-sol` at `high`. A
+worker on that default may run the task alone, spawn one role, or spawn the
+roles the user names. When it does fan out, the shipped roles are `terra`
+(`gpt-5.6-terra` at `xhigh`) for implementation that needs design care and
+`luna` (`gpt-5.6-luna` at `max`) for mechanical refactors, fixtures, search, and
+small tests. Lead And Leaf Roles below covers the files that carry those
+settings.
 
 Precedence is the user's live request, then a task-specific policy, then
 configured defaults, bounded by what the active CLI and account support. A live
@@ -123,6 +135,74 @@ Avoid hard-coded model names in briefs unless they come from `preferences.md` or
 the user just specified them. When the user specifies a model or effort policy,
 write it into the brief and the fleet table.
 
+## Lead And Leaf Roles
+
+Subagents inherit the parent's model, reasoning effort, and sandbox policy
+unless a role sets them. A role is a standalone TOML file under `.codex/agents/`
+(project-scoped) or `~/.codex/agents/` (personal). Each file defines `name`,
+`description`, and `developer_instructions`, and may set `model`,
+`model_reasoning_effort`, and `sandbox_mode`. Built-in roles are `default`,
+`worker`, and `explorer`.
+
+- <https://developers.openai.com/codex/config-reference>
+- <https://developers.openai.com/codex/multi-agent>
+
+Roles are a convenience for a worker that fans out. Bootstrap copies two of them
+from the skill's `assets/codex-agents/`, and a campaign can edit them, add
+roles, or ignore them:
+
+```toml
+# .codex/agents/terra.toml
+name = "terra"
+description = "Substantive implementation leaf: features, bug fixes, tests that need design care."
+developer_instructions = "Own only the files named in your task. Run the verification command before reporting. Do not spawn agents."
+model = "gpt-5.6-terra"
+model_reasoning_effort = "xhigh"
+```
+
+```toml
+# .codex/agents/luna.toml
+name = "luna"
+description = "Throughput leaf: mechanical refactors, fixtures, search, and small tests."
+developer_instructions = "Own only the files named in your task. Run the verification command before reporting. Do not spawn agents."
+model = "gpt-5.6-luna"
+model_reasoning_effort = "max"
+```
+
+The role file carries the model and effort, so a lead brief can name roles
+instead of models: "spawn a `terra` agent for the parser rewrite and a `luna`
+agent for the fixture updates". Leave the decomposition to the lead when the
+split is not obvious from outside.
+
+Take the model and effort from `preferences.md` or the user's request; omit both
+flags to use the CLI's configured default.
+
+```bash
+codex exec --json -s workspace-write \
+  -c approval_policy=never \
+  -m gpt-5.6-sol -c model_reasoning_effort=high \
+  -c agents.max_concurrent_threads_per_session=<cap> \
+  -c 'sandbox_workspace_write.writable_roots=["<worktree>/.git"]' \
+  --output-schema docs/campaign-hq/schemas/worker-result.json \
+  -C <worktree> \
+  -o docs/campaign-hq/out/<task>.json \
+  - < docs/campaign-hq/briefs/<task>.md
+```
+
+`agents.max_concurrent_threads_per_session` caps open subagent threads.
+`agents.default_subagent_model` and `agents.default_subagent_reasoning_effort`
+set fallbacks; an explicit spawn choice or a role file wins over both. Leaves
+inherit the lead's sandbox policy unless their role sets `sandbox_mode`, so a
+`workspace-write` lead gives its leaves write access to the same workspace.
+
+The `--json` stream shows only the lead's wait calls. Each leaf writes its own
+rollout file under `~/.codex/sessions/`, whose `turn_context` records carry the
+model and effort it ran with. Read those to confirm a leaf's role took effect;
+a lead's self-report about its own effort is not reliable.
+
+No config key limits nesting depth. The two-level depth cap is a brief-level
+rule, and every lead brief must forbid its leaves from spawning further agents.
+
 ## Capabilities
 
 | Capability | Invocation | Campaign use |
@@ -133,7 +213,7 @@ write it into the brief and the fleet table.
 | Image generation | prompt the built-in `image_gen` tool | asset generation; the tool saves under `~/.codex/generated_images/<session>/`, so the brief must require copying the file into the repo and verifying it exists |
 | Review mode | `codex exec review --base <ref>` | read-only review gate |
 | Session continuation | `codex exec resume <session-id> "<correction>"` | incremental steering after a finished run |
-| Native subagents | prompt the built-in `multi_agent_v1` tools (`spawn_agent`, `wait_agent`, `send_input`, `close_agent`) | a codex worker fans out its own parallel subagents inside one workspace; see the squads reference |
+| Native subagents | prompt the built-in multi-agent tools (`spawn_agent`, `wait_agent`, `send_input`, `close_agent`); role files in `.codex/agents/` set each leaf's model and effort; leaves without a role inherit the lead's | a codex worker fans out its own parallel subagents inside one workspace; see Lead And Leaf Roles above and the squads reference |
 
 ## Steering And Retry
 

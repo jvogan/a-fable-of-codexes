@@ -28,19 +28,24 @@ to main.
 Any worker that can dispatch, integrate, and verify can lead; compose whatever
 shape the sub-goal calls for. Two worked examples:
 
-- A **Claude lead** (Opus or Sonnet) dispatching codex workers via `codex
-  exec`, one worktree per leaf. Fits sub-goals that need design judgment or
-  mid-flight steering of the squad itself.
-- A **Codex lead** fanning out its native `multi_agent_v1` subagents
-  (`spawn_agent`, `wait_agent`, `send_input`, `close_agent`), which share its
-  single workspace. Fits mechanical fan-outs in one worktree, with the brief
-  assigning disjoint files to each subagent.
+- A **Claude lead** (Opus 5, or Sonnet 5 for mechanical sub-goals) dispatching
+  codex workers via `codex exec`, one worktree per leaf. Fits sub-goals that
+  need design judgment or mid-flight steering of the squad itself.
+- A **Codex lead** on `gpt-5.6-sol` fanning out its native multi-agent
+  subagents (`spawn_agent`, `wait_agent`, `send_input`, `close_agent`), which
+  share its single workspace. Fits mechanical fan-outs in one worktree, with
+  the brief assigning disjoint files to each subagent. Substantive leaves suit
+  the `terra` role and throughput leaves suit `luna`, though a lead may use one
+  role, other roles, or no subagents at all. The role files under
+  `.codex/agents/` carry each leaf's model and reasoning effort, so the lead
+  brief can name roles instead of model strings. See the Codex dispatch
+  reference.
 
 ## Hard Rules
 
 - Depth caps at two: conductor -> squad lead -> leaves.
 - Leaf briefs must forbid spawning subagents. Codex workers carry the native
-  `multi_agent_v1` spawn tools (nested `codex exec` processes are
+  native spawn tools (nested `codex exec` processes are
   sandbox-blocked; the native tools are not), so the rule has to be stated.
 - Every lead brief must include a hard cap on concurrent leaves.
 - Branches and worktrees stay inside the squad namespace.

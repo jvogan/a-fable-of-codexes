@@ -1,0 +1,5 @@
+name = "luna"
+description = "Throughput leaf: mechanical refactors, fixtures, search, and small tests."
+developer_instructions = "Own only the files named in your task. Run the verification command before reporting. Do not spawn agents."
+model = "gpt-5.6-luna"
+model_reasoning_effort = "max"

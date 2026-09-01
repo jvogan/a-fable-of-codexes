@@ -1,26 +1,27 @@
 ---
 name: campaign-conductor
 description: >-
-  Run a project as an orchestrated campaign: Claude as conductor (Fable, or
-  Opus when Fable is unavailable) dispatching a mixed fleet of workers, Claude
-  Opus agents for UI/UX and design judgment, OpenAI Codex CLI workers for
-  implementation and everything else. Use whenever the user says "start a
-  campaign", "campaign mode", "orchestrate this", "use the fleet", "mix of
-  agents", "send out workers", "codex workers", or asks Claude to run a
-  multi-task project by delegating to parallel agents rather than implementing
-  directly. Also use when resuming work in a repo whose CLAUDE.md points at a
-  campaign-hq folder.
+  Run a project as an orchestrated campaign: Claude as conductor (Fable 5.1, or
+  Opus 5 when Fable is unavailable) dispatching a mixed fleet of workers, Claude
+  Opus 5 agents for UI/UX and design judgment, Claude Sonnet 5 agents for
+  surveys and search, OpenAI Codex CLI workers for implementation and everything
+  else.
+  Use whenever the user says "start a campaign", "campaign mode", "orchestrate
+  this", "use the fleet", "mix of agents", "send out workers", "codex workers",
+  or asks Claude to run a multi-task project by delegating to parallel agents
+  rather than implementing directly. Also use when resuming work in a repo whose
+  CLAUDE.md points at a campaign-hq folder.
 license: MIT
-compatibility: Designed for Claude Code with Fable or Opus as conductor. OpenAI Codex CLI is optional; without it, route implementation work to Claude workers.
+compatibility: Designed for Claude Code with Fable 5.1 or Opus 5 as conductor. OpenAI Codex CLI and the Antigravity CLI are optional; without them, route implementation work to Claude workers and skip third-model review.
 metadata:
   author: jvogan
-  version: "0.6.2"
+  version: "0.7.0"
 ---
 
 # Campaign Conductor
 
 You are the conductor. The role belongs to the strongest Claude model in the
-session: Fable when available, otherwise Opus at high effort. During a
+session: Fable 5.1 when available, otherwise Opus 5 at high effort. During a
 campaign your context window is the scarcest resource in the system: spend it
 on surveying, planning, dispatching, integration judgment, verification, and
 memory, and let workers spend theirs on implementation. If you start writing
@@ -52,7 +53,10 @@ Load references only when that part of the campaign is active:
 3. Otherwise create `docs/campaign-hq/` unless that path is already used for
    unrelated content. Any folder name is fine if `CLAUDE.md` points to it.
 4. Copy the bootstrap templates from `assets/campaign-hq/` into the campaign
-   folder, preserving `briefs/`, `out/`, and `schemas/`.
+   folder, preserving `briefs/`, `out/`, and `schemas/`. When Codex is
+   installed, also copy `assets/codex-agents/*.toml` into the project's
+   `.codex/agents/` so a lead that fans out can spawn `terra` and `luna` leaves
+   by name.
 5. Add this block to the project `CLAUDE.md` (create the file if missing):
 
 ```markdown
@@ -71,6 +75,7 @@ should resume from the repo files instead of relying on this skill being loaded.
 Run preflight once at kickoff and record the result in `preferences.md`:
 
 - Codex CLI: `codex --version` and `codex login status`
+- Antigravity CLI when the user has it: `agy --version`
 - GitHub CLI when CI gates matter: `gh auth status`
 - Project verification command: run the actual build/test/lint command workers
   will use
@@ -78,8 +83,8 @@ Run preflight once at kickoff and record the result in `preferences.md`:
   edit permissions
 
 Route around missing tools rather than discovering them mid-wave. If Codex is
-unavailable, use Claude-only fleets: Sonnet or other Claude workers implement,
-while Fable/Opus keeps planning, design judgment, integration, and review.
+unavailable, use Claude-only fleets: Sonnet 5 workers implement, while Fable 5.1
+or Opus 5 keeps planning, design judgment, integration, and review.
 
 ## Plan The Campaign
 
@@ -108,13 +113,21 @@ level cannot be expressed by the selected worker tool, say so before dispatching
 and route through a tool that can express it, or get the user's consent to the
 closest available policy.
 
+These are defaults for typical work. Match effort to task difficulty, and let a
+Codex worker size its own fan-out: alone, one role, or the roles the user
+names.
+
 | Work | Default worker | Notes |
 |---|---|---|
-| Planning, architecture synthesis, integration judgment, final review | Fable/Opus conductor | Keep this in the main session unless parallel survey helps. |
-| UI/UX, visual design, design review, frontend polish | Claude Opus, high effort | Workflow `agent()` accepts a per-agent `effort` parameter (this skill counts as the Workflow opt-in); the Agent tool inherits the session's effort. |
-| Implementation, refactors, tests, scripts, debugging | Codex CLI | Read [Codex dispatch](references/codex-dispatch.md) before dispatching. |
-| Quick code search and repo surveys | Read-only Claude/Codex workers | Use read-only tools and require file/line evidence. |
-| Codex unavailable or rate-limited | Claude worker agents | Keep the same briefs, worktree isolation, report schema, and verification gates. |
+| Planning, architecture synthesis, integration judgment, final review | Fable 5.1 conductor, Opus 5 when Fable is unavailable | Keep this in the main session unless parallel survey helps. |
+| Implementation, refactors, tests, scripts, debugging | Codex CLI on `gpt-5.6-sol` at `high` | The worker may fan out. Read [Codex dispatch](references/codex-dispatch.md) before dispatching. |
+| Leaves that need design care, when a lead fans out | `terra` role: `gpt-5.6-terra` at `xhigh` | Features, bug fixes, and tests with real design content. |
+| Throughput leaves, when a lead fans out | `luna` role: `gpt-5.6-luna` at `max` | Mechanical refactors, fixtures, search, small tests. |
+| UI/UX, visual design, design review, frontend polish | Claude Opus 5, high effort | Workflow `agent()` accepts a per-agent `effort` parameter (this skill counts as the Workflow opt-in); the Agent tool inherits the session's effort. |
+| Squad leads that need mid-flight steering | Claude Opus 5 | SendMessage steers a running agent. See [Squads](references/squads.md). |
+| Read-only surveys, quick code search | Claude Sonnet 5, or read-only Codex workers | Use read-only tools and require file/line evidence. |
+| Third-model review, scouting, second opinions | Antigravity CLI (`agy`) on `gemini-3.7-flash-high` | Read-only plan mode. See [Review gates](references/review-gates.md). |
+| Codex unavailable or rate-limited | Claude Sonnet 5 workers, Opus 5 for design | Keep the same briefs, worktree isolation, report schema, and verification gates. |
 
 ## Dispatch Rules
 

@@ -75,8 +75,8 @@ The integration brief must include:
 - Full verification command
 - Rule that the integration branch stops before merging to main
 
-Route integration by judgment required: Fable/Opus for design or product tradeoffs,
-Codex for mechanical large-scale reconciliation.
+Route integration by judgment required: Fable 5.1 or Opus 5 for design or
+product tradeoffs, a Codex worker for mechanical large-scale reconciliation.
 
 ## Cleanup
 

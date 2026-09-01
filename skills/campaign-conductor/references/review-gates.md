@@ -53,15 +53,29 @@ Claude workers should end with a fenced JSON block matching the same schema.
 
 ## Cross-Model Review
 
-Author and reviewer must be separate.
+Author and reviewer must be separate. Three model families can review: Claude,
+Codex, and Gemini through the Antigravity CLI.
 
-- After a Codex worker lands a high-risk diff, dispatch a Claude reviewer.
+- After a Codex worker lands a high-risk diff, dispatch a Claude reviewer or an
+  Antigravity review.
 - After a Claude worker lands a high-risk diff, run a Codex read-only review.
 - After each wave integration, review the merged result to catch semantic
   conflicts that appear only after individually valid branches combine.
 
 High-risk means auth, permissions, billing, data migration, shared state,
 security boundaries, persistent storage, or broad refactors.
+
+Read-only Antigravity review:
+
+```bash
+agy --model gemini-3.7-flash-high --mode plan --sandbox \
+  --dangerously-skip-permissions --add-dir "$PWD" --print-timeout 20m \
+  -p="<prompt>"
+```
+
+Attach `-p` to its value with `=`. Omit `--effort` in plan mode. For a
+write-mode agent, swap `--mode plan --sandbox` for `--effort high --mode
+accept-edits`. Check `agy --help` for the installed version.
 
 Without a second model available, substitute a fresh reviewer agent that did
 not author the diff. Weaker than a different model, still far better than

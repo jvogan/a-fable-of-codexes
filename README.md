@@ -9,11 +9,18 @@
 [![release](https://img.shields.io/github/v/release/jvogan/a-fable-of-codexes?labelColor=333&color=e2694e)](https://github.com/jvogan/a-fable-of-codexes/releases)
 [![license](https://img.shields.io/badge/license-MIT-blue?labelColor=333)](LICENSE)
 
-Claude Code skills that make Claude (Fable, or Opus when Fable is unavailable)
-the conductor of an AI worker fleet. The conductor surveys and plans,
-dispatches many parallel OpenAI Codex CLI workers for implementation and
-Claude Opus agents for design judgment, then integrates, reviews, and verifies
+Claude Code skills that make Claude (Fable 5.1, or Opus 5 when Fable is
+unavailable) the conductor of an AI worker fleet. The conductor surveys and
+plans, dispatches many parallel OpenAI Codex CLI workers for implementation and
+Claude Opus 5 agents for design judgment, then integrates, reviews, and verifies
 what comes back.
+
+By default a Codex worker runs on `gpt-5.6-sol` at `high` reasoning effort and
+either finishes the task alone or fans out. When it fans out, two shipped roles
+cover the leaves: `gpt-5.6-terra` at `xhigh` for substantive implementation and
+`gpt-5.6-luna` at `max` for throughput work. The Antigravity CLI on
+`gemini-3.7-flash-high` adds a third model family for read-only reviews, scouts,
+and second opinions.
 
 One session directs the whole effort: workers spend their own context on
 implementation while the conductor's stays free for judgment, git worktrees
@@ -29,13 +36,17 @@ Runs a project as an orchestrated campaign.
 - **Bootstrap.** First use in a repo copies templates from
   `assets/campaign-hq/` into `docs/campaign-hq/`: `CAMPAIGN.md` for the plan
   and fleet table, `LEARNINGS.md` for distilled lessons, `preferences.md` for
-  worker routing, and `schemas/worker-result.json` for reports. It also adds a
+  worker routing, and `schemas/worker-result.json` for reports, plus
+  `.codex/agents/` role files when Codex is installed. It also adds a
   pointer to the project's CLAUDE.md so later sessions resume from repo state.
-- **Routing.** Fable/Opus stays on planning, judgment, verification, and memory.
-  Codex CLI handles implementation, tests, research, and mechanical refactors
-  when available. Claude worker agents use the same briefs and reports when
-  Codex is unavailable or exhausted. Live worker, model, and effort requests win
-  over defaults, are written to `preferences.md`, and persist across sessions.
+- **Routing.** Fable 5.1 or Opus 5 stays on planning, judgment, verification,
+  and memory. Codex on `sol` handles implementation, tests, research, and
+  mechanical refactors, alone for a single task or fanning out to `terra` and
+  `luna` leaves when the work splits. Claude Sonnet 5 agents take read-only
+  surveys and the implementation role when Codex is unavailable or exhausted,
+  using the same briefs and reports. Live worker, model, and effort requests
+  win over defaults, are written to `preferences.md`, and persist across
+  sessions.
 - **Campaign sizing.** Small projects get a directly written plan. Large or
   unfamiliar ones get a parallel survey fan-out that drafts the plan for
   sign-off first.
@@ -44,13 +55,14 @@ Runs a project as an orchestrated campaign.
   integration handled as its own dispatched task, and big campaigns
   structured as waves: dispatch, collect, integrate, verify. Finished Codex
   sessions resume with context intact for incremental corrections.
-- **Squads.** For cohesive sub-goals, a Claude squad lead dispatches its own
-  Codex workers, integrates, verifies, and returns one branch, with a hard
-  depth cap, an exclusive branch namespace, and per-leaf evidence required
-  in its report.
-- **Review gates.** Fixed-schema worker reports, cross-model review (Claude
-  reviews Codex diffs and Codex reviews Claude's), and same-brief bake-offs
-  judged on artifacts for high-stakes tasks.
+- **Squads.** For cohesive sub-goals, a squad lead dispatches its own workers,
+  integrates, verifies, and returns one branch, with a hard depth cap, an
+  exclusive branch namespace, and per-leaf evidence required in its report. Two
+  shapes: an Opus 5 lead running Codex workers across worktrees, and a Codex
+  `sol` lead running `terra` and `luna` leaves in one workspace.
+- **Review gates.** Fixed-schema worker reports, cross-model review across
+  three model families (Claude, Codex, and Gemini through the Antigravity CLI),
+  and same-brief bake-offs judged on artifacts for high-stakes tasks.
 - **Worker capabilities.** Doctrine covers Codex web search for research
   scouts, image input for UI fixes from screenshots, native image generation
   for assets, and review mode.
@@ -76,20 +88,20 @@ mid-campaign, including a worked worker brief and the report schema.
 The panels are worked examples. Any capable worker can lead, integrate, or
 review, and a campaign composes whatever shape the work needs.
 
-Squads nest the fan-out: a squad lead (Opus or Codex) dispatches its own
-parallel workers, integrates their branches, and hands the conductor one
+Squads nest the fan-out: a squad lead (Opus 5 or a Codex `sol` lead) dispatches
+its own parallel workers, integrates their branches, and hands the conductor one
 verified branch. Tested end to end both ways: a spawned Opus lead ran Codex
 workers in parallel worktrees, each landing its own commit, and a Codex lead
 fanned out its native subagents inside one workspace.
 
 ```mermaid
 flowchart TD
-    C[Fable conductor] -->|sub-goal briefs| S1[Squad lead · Opus]
-    C --> S2[Squad lead · Codex]
-    S1 --> A1[Codex] & A2[Codex] & A3[Codex]
-    S2 --> B1[Codex] & B2[Codex] & B3[Codex]
-    A1 & A2 & A3 --> I1[campaign/search<br>integration branch]
-    B1 & B2 & B3 --> I2[campaign/billing<br>integration branch]
+    C[Fable 5.1 conductor] -->|sub-goal briefs| S1[Squad lead · Opus 5]
+    C --> S2[Squad lead · Codex sol]
+    S1 --> A["Codex workers ×3<br>one worktree each"]
+    S2 --> B["terra + luna leaves ×3<br>one shared workspace"]
+    A --> I1[campaign/search<br>integration branch]
+    B --> I2[campaign/billing<br>integration branch]
     I1 --> V[Conductor merges,<br>re-verifies]
     I2 --> V
     V --> M[(main)]
@@ -156,9 +168,20 @@ the campaign automatically. Direct it in plain language:
   Codex for this wave", "send the mechanical refactor to the fast model"): the
   conductor writes the request to `preferences.md`, where it persists.
 
-  Without Codex installed, the skill runs Claude-only fleets: Sonnet workers
-  take the implementation role, Opus keeps design and squad-lead duty, and
+  Role files cover a worker that fans out. Bootstrap copies `terra.toml` and
+  `luna.toml` into the project's `.codex/agents/`, and each file sets that
+  role's `model` and `model_reasoning_effort`. A lead can then spawn a leaf by
+  role name and skip model strings in the brief. Edit those two files or add
+  your own roles; a worker is free to run the task alone.
+
+  Without Codex installed, the skill runs Claude-only fleets: Sonnet 5 workers
+  take the implementation role, Opus 5 keeps design and squad-lead duty, and
   the briefs, worktrees, squads, and reports stay the same.
+- **Antigravity CLI** (optional, [antigravity.google](https://antigravity.google)).
+  Adds a third model family for review. The conductor runs `agy` on
+  `gemini-3.7-flash-high` in read-only plan mode for reviews, scouts, and
+  second opinions. Without it, cross-model review runs between Claude and
+  Codex.
 - **Codex plugin for Claude Code** (optional,
   [github.com/openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc)).
   Adds `/codex:review`, `/codex:adversarial-review`, and background-delegation

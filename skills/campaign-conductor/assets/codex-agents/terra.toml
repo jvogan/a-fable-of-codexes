@@ -1,0 +1,5 @@
+name = "terra"
+description = "Substantive implementation leaf: features, bug fixes, tests that need design care."
+developer_instructions = "Own only the files named in your task. Run the verification command before reporting. Do not spawn agents."
+model = "gpt-5.6-terra"
+model_reasoning_effort = "xhigh"
