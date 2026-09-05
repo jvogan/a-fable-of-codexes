@@ -15,7 +15,7 @@ license: MIT
 compatibility: Designed for Claude Code with Fable 5.1 or Opus 5 as conductor. OpenAI Codex CLI and the Antigravity CLI are optional; without them, route implementation work to Claude workers and skip third-model review.
 metadata:
   author: jvogan
-  version: "0.7.0"
+  version: "0.8.0"
 ---
 
 # Campaign Conductor
@@ -55,8 +55,8 @@ Load references only when that part of the campaign is active:
 4. Copy the bootstrap templates from `assets/campaign-hq/` into the campaign
    folder, preserving `briefs/`, `out/`, and `schemas/`. When Codex is
    installed, also copy `assets/codex-agents/*.toml` into the project's
-   `.codex/agents/` so a lead that fans out can spawn `terra` and `luna` leaves
-   by name.
+   `.codex/agents/` so a lead that fans out can spawn `astra`, `terra`,
+   `luna`, and `sol` leaves by name.
 5. Add this block to the project `CLAUDE.md` (create the file if missing):
 
 ```markdown
@@ -74,7 +74,8 @@ should resume from the repo files instead of relying on this skill being loaded.
 
 Run preflight once at kickoff and record the result in `preferences.md`:
 
-- Codex CLI: `codex --version` and `codex login status`
+- Codex CLI: `codex --version`, `codex login status`, and the default-model
+  smoke test in [Codex dispatch](references/codex-dispatch.md)
 - Antigravity CLI when the user has it: `agy --version`
 - GitHub CLI when CI gates matter: `gh auth status`
 - Project verification command: run the actual build/test/lint command workers
@@ -120,9 +121,11 @@ names.
 | Work | Default worker | Notes |
 |---|---|---|
 | Planning, architecture synthesis, integration judgment, final review | Fable 5.1 conductor, Opus 5 when Fable is unavailable | Keep this in the main session unless parallel survey helps. |
-| Implementation, refactors, tests, scripts, debugging | Codex CLI on `gpt-5.6-sol` at `high` | The worker may fan out. Read [Codex dispatch](references/codex-dispatch.md) before dispatching. |
-| Leaves that need design care, when a lead fans out | `terra` role: `gpt-5.6-terra` at `xhigh` | Features, bug fixes, and tests with real design content. |
-| Throughput leaves, when a lead fans out | `luna` role: `gpt-5.6-luna` at `max` | Mechanical refactors, fixtures, search, small tests. |
+| Implementation, refactors, tests, scripts, debugging | Codex CLI on `gpt-6-astra` at `high` | The worker may fan out. Read [Codex dispatch](references/codex-dispatch.md) before dispatching. |
+| Leaves that need design care, when a lead fans out | `astra` role: `gpt-6-astra` at `medium` | Features, bug fixes, and tests with real design content. |
+| Everyday and throughput leaves, when a lead fans out | `terra` role: `gpt-5.6-terra` at `xhigh`; `luna` role: `gpt-5.6-luna` at `xhigh` | Terra for routine implementation, luna for mechanical refactors, fixtures, search, small tests. |
+| Second opinion inside a fan-out | `sol` role: `gpt-5.6-sol` at `high` | Reviews a sibling leaf's diff or retries a risky task on a different model. |
+| Astra not yet enabled on the account | Codex CLI on `gpt-5.6-sol` at `high` | Same briefs and roles. Record the fallback in `preferences.md`. |
 | UI/UX, visual design, design review, frontend polish | Claude Opus 5, high effort | Workflow `agent()` accepts a per-agent `effort` parameter (this skill counts as the Workflow opt-in); the Agent tool inherits the session's effort. |
 | Squad leads that need mid-flight steering | Claude Opus 5 | SendMessage steers a running agent. See [Squads](references/squads.md). |
 | Read-only surveys, quick code search | Claude Sonnet 5, or read-only Codex workers | Use read-only tools and require file/line evidence. |

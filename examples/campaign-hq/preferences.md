@@ -2,8 +2,8 @@
 <!-- Precedence: user's live instruction > this file > skill defaults.
      Update this file whenever the user states a preference. -->
 - Conductor: Fable 5.1, or Opus 5 at high effort when Fable is unavailable
-- Implementation, tests, research: codex on gpt-5.6-sol at high effort; fan out only when the task splits
-- Codex leaves when it fans out: terra (xhigh) for engine and tokenizer work; luna (max) for fixtures and mechanical edits
+- Implementation, tests, research: codex on gpt-6-astra at high effort; fan out only when the task splits
+- Codex leaves when it fans out: astra (medium) for engine and tokenizer work; luna (xhigh) for fixtures and mechanical edits
 - UI/UX, design: claude opus 5, high effort
 - Quick search and read-only surveys: claude sonnet 5
 - Third-model review: agy on gemini-3.7-flash-high, read-only; used on the ranking diff

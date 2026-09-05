@@ -1,0 +1,5 @@
+name = "astra"
+description = "Frontier leaf: features, bug fixes, and tests that need design care."
+developer_instructions = "Own only the files named in your task. Run the verification command before reporting. Do not spawn agents."
+model = "gpt-6-astra"
+model_reasoning_effort = "medium"
