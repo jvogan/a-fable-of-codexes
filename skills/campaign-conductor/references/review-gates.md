@@ -66,8 +66,9 @@ Codex, and Gemini, Grok, or Muse through their OAuth-backed CLIs.
 High-risk means auth, permissions, billing, data migration, shared state,
 security boundaries, persistent storage, or broad refactors.
 
-Codex consultation, also the model for architecture questions and design
-second opinions:
+Codex consultation, also the shape for architecture questions and design
+second opinions. Inside a Codex fan-out the same review runs as a `critic`
+leaf, read-only by role file:
 
 ```bash
 codex exec -s read-only -m gpt-6-astra -c model_reasoning_effort=xhigh \
@@ -106,9 +107,18 @@ self-review. Author and reviewer stay separate in every gate.
 ## Bake-Offs
 
 For a high-stakes task with uncertain solution shape, dispatch the same brief to
-two workers in separate worktrees. Give a judge explicit criteria before
-dispatch, correctness first. Give the judge diffs, verification output, and
-screenshots rather than worker summaries.
+two workers in separate worktrees. Pair model families by default: Codex on
+`gpt-6-astra` against Claude Opus 5. Give a judge explicit criteria before
+dispatch, correctness first. The judge is the conductor, or a read-only Codex
+arbiter on `gpt-6-astra` at `max`:
+
+```bash
+codex exec -s read-only -m gpt-6-astra -c model_reasoning_effort=max \
+  -C "$PWD" - < docs/campaign-hq/briefs/<task>-judge.md
+```
+
+Give the judge diffs, verification output, and screenshots rather than worker
+summaries.
 
 Use bake-offs sparingly because they double worker usage and add judge time.
 

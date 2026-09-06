@@ -34,10 +34,10 @@ shape the sub-goal calls for. Two worked examples:
 - A **Codex lead** on `gpt-6-astra` fanning out its native multi-agent
   subagents (`spawn_agent`, `wait_agent`, `send_input`, `close_agent`), which
   share its single workspace. Fits mechanical fan-outs in one worktree, with
-  the brief assigning disjoint files to each subagent. Substantive leaves suit
-  the `astra` role, throughput leaves suit `luna`, `terra` covers everyday
-  work, and `sol` gives a second opinion, though a lead may use one role, other
-  roles, or no subagents at all. The role files under
+  the brief assigning disjoint files to each subagent. Leaves that need
+  judgment suit the `feature` role, mechanical leaves suit `grunt`, and
+  `critic` gives a read-only second opinion, though a lead may use one role,
+  other roles, or no subagents at all. The role files under
   `.codex/agents/` carry each leaf's model and reasoning effort, so the lead
   brief can name roles instead of model strings. See the Codex dispatch
   reference.

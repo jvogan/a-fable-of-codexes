@@ -15,14 +15,16 @@ plans, dispatches many parallel OpenAI Codex CLI workers for implementation and
 Claude Opus 5 agents for design judgment, then integrates, reviews, and verifies
 what comes back.
 
-By default a Codex worker runs on `gpt-6-astra` at `high` reasoning effort and
-either finishes the task alone or fans out. When it fans out, four shipped
-roles cover the leaves: `gpt-6-astra` at `medium` for substantive
-implementation, `gpt-5.6-terra` and `gpt-5.6-luna` at `xhigh` for everyday and
-throughput work, and `gpt-5.6-sol` at `high` for a second opinion. For
+Codex work runs on `gpt-6-astra`, and the reasoning effort does the routing:
+`medium` for read-only scouts, `high` for the default worker, `xhigh` for
 consultation (architecture questions, design second opinions, and read-only
-review of a Claude worker's diff) the conductor calls `gpt-6-astra` at
-`xhigh`. Other OAuth-backed CLIs add further model families for read-only
+review of a Claude worker's diff), `max` for bake-off judging and final
+arbitration, and `ultra` for a hard task that Astra should split on its own.
+A worker either finishes the task alone or fans out to three shipped leaf
+roles: `feature` (`gpt-6-astra` at `medium`) for work that needs judgment,
+`critic` (`gpt-6-astra` at `xhigh`, read-only) for a second opinion on a
+sibling's diff, and `grunt` (`gpt-5.6-luna` at `xhigh`) for mechanical work,
+where Luna's price conserves Astra usage. Other OAuth-backed CLIs add further model families for read-only
 reviews, scouts, and second opinions: `agy` (Gemini 3.8 Flash at `high`),
 `grok` (Grok 4.6 at `high`), and `muse` (Meta Muse Spark 1.3 at `xhigh`).
 
@@ -44,9 +46,9 @@ Runs a project as an orchestrated campaign.
   `.codex/agents/` role files when Codex is installed. It also adds a
   pointer to the project's CLAUDE.md so later sessions resume from repo state.
 - **Routing.** Fable 5.1 or Opus 5 stays on planning, judgment, verification,
-  and memory. Codex on `astra` handles implementation, tests, research, and
-  mechanical refactors, alone for a single task or fanning out to `astra`,
-  `terra`, `luna`, and `sol` leaves when the work splits, and answers
+  and memory. Codex on Astra handles implementation, tests, research, and
+  mechanical refactors, alone for a single task or fanning out to `feature`,
+  `critic`, and `grunt` leaves when the work splits, and answers
   consultations read-only at `xhigh`. Claude Sonnet 5 agents take read-only
   surveys and the implementation role when Codex is unavailable or exhausted,
   using the same briefs and reports. Live worker, model, and effort requests
@@ -64,7 +66,7 @@ Runs a project as an orchestrated campaign.
   integrates, verifies, and returns one branch, with a hard depth cap, an
   exclusive branch namespace, and per-leaf evidence required in its report. Two
   shapes: an Opus 5 lead running Codex workers across worktrees, and a Codex
-  `astra` lead running `astra` and `luna` leaves in one workspace.
+  Astra lead running `feature` and `grunt` leaves in one workspace.
 - **Review gates.** Fixed-schema worker reports, cross-model review across
   model families (Claude, Codex, and Gemini, Grok, or Muse through their
   CLIs), and same-brief bake-offs judged on artifacts for high-stakes tasks.
@@ -93,7 +95,7 @@ mid-campaign, including a worked worker brief and the report schema.
 The panels are worked examples. Any capable worker can lead, integrate, or
 review, and a campaign composes whatever shape the work needs.
 
-Squads nest the fan-out: a squad lead (Opus 5 or a Codex `astra` lead) dispatches
+Squads nest the fan-out: a squad lead (Opus 5 or a Codex Astra lead) dispatches
 its own parallel workers, integrates their branches, and hands the conductor one
 verified branch. Tested end to end both ways: a spawned Opus lead ran Codex
 workers in parallel worktrees, each landing its own commit, and a Codex lead
@@ -102,9 +104,9 @@ fanned out its native subagents inside one workspace.
 ```mermaid
 flowchart TD
     C[Fable 5.1 conductor] -->|sub-goal briefs| S1[Squad lead · Opus 5]
-    C --> S2[Squad lead · Codex astra]
+    C --> S2[Squad lead · Codex Astra]
     S1 --> A["Codex workers ×3<br>one worktree each"]
-    S2 --> B["astra + luna leaves ×3<br>one shared workspace"]
+    S2 --> B["feature + grunt leaves ×3<br>one shared workspace"]
     A --> I1[campaign/search<br>integration branch]
     B --> I2[campaign/billing<br>integration branch]
     I1 --> V[Conductor merges,<br>re-verifies]
@@ -168,17 +170,18 @@ the campaign automatically. Direct it in plain language:
 
   Reasoning runs a ladder (`low`, `medium`, `high`, `xhigh`, `max`, `ultra`),
   and Codex lists `gpt-6-astra` above the `gpt-5.6` line (`sol`, `terra`,
-  `luna`). `high` on Astra is a sound default; reserve `max`/`ultra` for the
-  hardest architecture and debugging, and note that `ultra` delegates to
-  subagents on its own. Override per task in plain language ("use ultra
+  `luna`). `high` on Astra is a sound default; reserve `max` for judging and
+  arbitration and `ultra` for the hardest tasks, and note that `ultra`
+  delegates to subagents on its own. Override per task in plain language ("use ultra
   Codex for this wave", "send the mechanical refactor to the fast model"): the
   conductor writes the request to `preferences.md`, where it persists.
 
-  Role files cover a worker that fans out. Bootstrap copies `astra.toml`,
-  `terra.toml`, `luna.toml`, and `sol.toml` into the project's
-  `.codex/agents/`, and each file sets that role's `model` and
-  `model_reasoning_effort`. A lead can then spawn a leaf by role name and skip
-  model strings in the brief. Edit those files or add your own roles; a worker
+  Role files cover a worker that fans out. Bootstrap copies `feature.toml`,
+  `critic.toml`, and `grunt.toml` into the project's `.codex/agents/`, and
+  each file sets that role's `model` and `model_reasoning_effort` (the critic
+  also sets `sandbox_mode = "read-only"`). Roles are named for the job, so a
+  new model generation changes one line per file. A lead can then spawn a leaf
+  by role name and skip model strings in the brief. Edit those files or add your own roles; a worker
   is free to run the task alone.
 
   Without Codex installed, the skill runs Claude-only fleets: Sonnet 5 workers

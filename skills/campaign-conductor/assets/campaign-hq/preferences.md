@@ -3,7 +3,8 @@
      Update this file whenever the user states a preference. -->
 - Conductor: Claude Fable 5.1, or Opus 5 at high effort when Fable is unavailable
 - Implementation, tests, research, mechanical refactors: Codex CLI on gpt-6-astra at high effort; the worker sizes its own fan-out. Fallback while Astra is unavailable on the account: gpt-5.6-sol at high
-- Codex leaves when a worker fans out: astra role (gpt-6-astra, medium) for work needing design care; terra role (gpt-5.6-terra, xhigh) for everyday work; luna role (gpt-5.6-luna, xhigh) for throughput; sol role (gpt-5.6-sol, high) for a second opinion
+- Codex leaves when a worker fans out: feature role (gpt-6-astra, medium) for work needing judgment; critic role (gpt-6-astra, xhigh, read-only) for a second opinion on a sibling's diff; grunt role (gpt-5.6-luna, xhigh) for mechanical work
+- Hard tasks that split many ways: Codex CLI on gpt-6-astra at ultra in its own worktree. Bake-off judging and final arbitration: gpt-6-astra at max, read-only
 - Consultation (architecture questions, design second opinions, read-only review of Claude diffs): Codex CLI on gpt-6-astra at xhigh, read-only
 - UI/UX, design, design review, integration judgment: Claude Opus 5, high effort
 - Read-only surveys, quick search, implementation when Codex is unavailable: Claude Sonnet 5

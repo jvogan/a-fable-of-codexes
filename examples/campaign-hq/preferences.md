@@ -3,7 +3,7 @@
      Update this file whenever the user states a preference. -->
 - Conductor: Fable 5.1, or Opus 5 at high effort when Fable is unavailable
 - Implementation, tests, research: codex on gpt-6-astra at high effort; fan out only when the task splits
-- Codex leaves when it fans out: astra (medium) for engine and tokenizer work; luna (xhigh) for fixtures and mechanical edits
+- Codex leaves when it fans out: feature (astra, medium) for engine and tokenizer work; grunt (luna, xhigh) for fixtures and mechanical edits; critic (astra, xhigh) on the engine diff
 - Consultation: codex on gpt-6-astra at xhigh, read-only; used for the index layout question
 - UI/UX, design: claude opus 5, high effort
 - Quick search and read-only surveys: claude sonnet 5

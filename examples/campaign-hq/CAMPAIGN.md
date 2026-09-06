@@ -9,7 +9,7 @@ Status: phase 2 of 3: index pipeline merged; UI and highlighting in flight.
 - [x] Tokenizer handling code identifiers (camelCase, snake_case) - worker: codex - verify: `npm test -- tokenizer`
 
 ### Phase 2: Search UI
-- [x] Query engine with ranking (title > heading > body) - worker: codex lead (astra; astra + luna leaves) - verify: `npm test -- ranking`
+- [x] Query engine with ranking (title > heading > body) - worker: codex lead (astra; feature + grunt leaves, critic on the engine diff) - verify: `npm test -- ranking`
 - [ ] Search palette component (Cmd-K, keyboard navigation) - worker: opus 5 - verify: `npm test -- palette` + visual review
 - [ ] Result highlighting and deep links to headings - worker: codex - verify: `npm test -- highlight`
 
@@ -22,4 +22,4 @@ Status: phase 2 of 3: index pipeline merged; UI and highlighting in flight.
 |---|---|---|---|---|---|---|
 | Search palette | opus 5 | campaign/palette | ../wt-palette | agent:palette | 13:58 | in progress |
 | Result highlighting | codex | campaign/highlight | ../wt-highlight | 019826f3-…-8b2c | 14:05 | running, ~30 min expected |
-| Ranking engine | codex lead (astra; astra + luna leaves) | campaign/ranking | (removed) | 0197f1aa-…-42d1 | 11:20 | merged, verified, worktree removed |
+| Ranking engine | codex lead (astra; feature + grunt + critic leaves) | campaign/ranking | (removed) | 0197f1aa-…-42d1 | 11:20 | merged, verified, worktree removed |

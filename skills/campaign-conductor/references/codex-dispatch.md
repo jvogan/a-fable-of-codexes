@@ -130,22 +130,31 @@ task that already failed at a lower tier), and route mechanical or throughput
 work to a faster variant. A cheap model on genuinely hard work produces rework,
 so do not under-provision either.
 
-The default when the user has specified nothing: `gpt-6-astra` at `high`. A
-worker on that default may run the task alone, spawn one role, or spawn the
-roles the user names. When it does fan out, the shipped roles are `astra`
-(`gpt-6-astra` at `medium`) for implementation that needs design care, `terra`
-(`gpt-5.6-terra` at `xhigh`) for everyday implementation at lower cost, `luna`
-(`gpt-5.6-luna` at `xhigh`) for mechanical refactors, fixtures, search, and
-small tests, and `sol` (`gpt-5.6-sol` at `high`) for a second opinion on a
-sibling's diff or a retry of a risky task. Lead And Leaf Roles below covers the
-files that carry those settings. Consultations, where the conductor asks Codex
-directly for an architecture answer, a design second opinion, or a read-only
-review of a Claude worker's diff, run `gpt-6-astra` at `xhigh` in the
-`read-only` sandbox; the review gates reference has the invocation.
+Astra is the working model, and the effort tier does the routing. Every
+shape the conductor calls directly runs on `gpt-6-astra`:
 
-Astra costs 2.5x Sol per token on API pricing and on plan credits, and its fast
-tier multiplies that again, but it finishes coding tasks in far fewer tokens,
-so per-task cost lands near Sol's. Above 272K input tokens the API adds a
+| Shape | Effort | Sandbox | Use |
+|---|---|---|---|
+| Scout | `medium` | `read-only`, `-c web_search=live` for research | surveys, current APIs, advisories |
+| Lead | `high` | `workspace-write` | the default worker; runs alone or fans out |
+| Consultant | `xhigh` | `read-only` | architecture answers, design second opinions, review of a Claude worker's diff |
+| Arbiter | `max` | `read-only` | bake-off judging, final arbitration between a critic and an author |
+| Self-organizing lead | `ultra` | `workspace-write`, own worktree | a hard task that splits many ways; Astra plans, delegates, and returns one branch |
+
+The default when the user has specified nothing is the lead shape. A worker on
+that default may run the task alone, spawn one role, or spawn the roles the
+user names. When it does fan out, the shipped roles are `feature` (`gpt-6-astra`
+at `medium`) for implementation that needs judgment, `critic` (`gpt-6-astra` at
+`xhigh`, read-only) for a second opinion on a sibling's diff, and `grunt`
+(`gpt-5.6-luna` at `xhigh`) for mechanical refactors, fixtures, search, and
+small tests. Lead And Leaf Roles below covers the files that carry those
+settings. The review gates reference has the consultant invocation.
+
+On plan credits Astra costs 2.5x Sol, 5x Terra, and about 50x Luna per token,
+and its fast tier multiplies that again. Astra finishes coding tasks in far
+fewer tokens, so per-task cost lands near Sol's and the 5.6 line earns its
+place only at Luna's price: the `grunt` role exists to conserve Astra usage on
+work that needs no judgment. Above 272K input tokens the API adds a
 long-context premium. The CLI compacts near that point unless
 `auto_compact_token_limit` is raised toward Astra's 1M window, so raise it only
 for a task that needs the whole window.
@@ -175,30 +184,30 @@ unless a role sets them. A role is a standalone TOML file under `.codex/agents/`
 - <https://learn.chatgpt.com/docs/config-file/config-reference>
 - <https://learn.chatgpt.com/docs/agent-configuration/subagents>
 
-Roles are a convenience for a worker that fans out. Bootstrap copies four of
+Roles are a convenience for a worker that fans out. Bootstrap copies three of
 them from the skill's `assets/codex-agents/`, and a campaign can edit them, add
-roles, or ignore them. Each follows the same shape:
+roles, or ignore them. Roles are named for the job so the model behind each
+can change with the next generation. Each follows the same shape:
 
 ```toml
-# .codex/agents/astra.toml
-name = "astra"
-description = "Frontier leaf: features, bug fixes, and tests that need design care."
+# .codex/agents/feature.toml
+name = "feature"
+description = "Judgment leaf: features, bug fixes, and tests that need design care."
 developer_instructions = "Own only the files named in your task. Run the verification command before reporting. Do not spawn agents."
 model = "gpt-6-astra"
 model_reasoning_effort = "medium"
 ```
 
-| Role | Model | Effort | Leaf work |
-|---|---|---|---|
-| `astra` | `gpt-6-astra` | `medium` | Features, bug fixes, and tests that need design care. Medium is Astra's default tier and runs cheaper and faster than Sol at `high`. |
-| `terra` | `gpt-5.6-terra` | `xhigh` | Everyday implementation at previous-generation cost. |
-| `luna` | `gpt-5.6-luna` | `xhigh` | Mechanical refactors, fixtures, search, small tests. |
-| `sol` | `gpt-5.6-sol` | `high` | Second opinion on a sibling leaf's diff, or a retry of a risky task on a different model. |
+| Role | Model | Effort | Sandbox | Leaf work |
+|---|---|---|---|---|
+| `feature` | `gpt-6-astra` | `medium` | inherited | Features, bug fixes, and tests that need judgment. Medium is Astra's default tier. |
+| `critic` | `gpt-6-astra` | `xhigh` | `read-only`, set in the file | Second opinion on a sibling leaf's diff from a fresh session. The role file enforces read-only, so the critic cannot patch what it reviews. |
+| `grunt` | `gpt-5.6-luna` | `xhigh` | inherited | Mechanical refactors, fixtures, search, small tests. Raise to `max` when a mechanical task fails verification; `luna` stops there. |
 
 The role file carries the model and effort, so a lead brief can name roles
-instead of models: "spawn an `astra` agent for the parser rewrite and a `luna`
-agent for the fixture updates". Leave the decomposition to the lead when the
-split is not obvious from outside.
+instead of models: "spawn a `feature` agent for the parser rewrite, a `grunt`
+agent for the fixture updates, then a `critic` on the parser diff". Leave the
+decomposition to the lead when the split is not obvious from outside.
 
 Take the model and effort from `preferences.md` or the user's request; omit both
 flags to use the CLI's configured default.
@@ -238,7 +247,7 @@ Keep leaves off `ultra` for the same reason: that tier delegates on its own.
 | Live web search | `-c web_search=live` (default is `cached`, an index with no live fetch; `codex exec` has no `--search` flag) | volatile facts, current APIs, advisories, versions |
 | Image input | `-i current.png -i target.png` | UI bug reproduction from screenshots and mocks |
 | Image generation | prompt the built-in `image_gen` tool | asset generation; the tool saves under `~/.codex/generated_images/<session>/`, so the brief must require copying the file into the repo and verifying it exists |
-| Review mode | `codex exec review --base <ref> -m gpt-6-astra -c model_reasoning_effort=xhigh` | read-only review gate on the consultation model |
+| Review mode | `codex exec review --base <ref> -m gpt-6-astra -c model_reasoning_effort=xhigh` | read-only review gate in the consultant shape |
 | Session continuation | `codex exec resume <session-id> "<correction>"` | incremental steering after a finished run |
 | Native subagents | prompt the built-in multi-agent tools (`spawn_agent`, `wait_agent`, `send_input`, `close_agent`); role files in `.codex/agents/` set each leaf's model and effort; leaves without a role inherit the lead's | a codex worker fans out its own parallel subagents inside one workspace; see Lead And Leaf Roles above and the squads reference |
 
