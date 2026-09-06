@@ -12,10 +12,10 @@ description: >-
   rather than implementing directly. Also use when resuming work in a repo whose
   CLAUDE.md points at a campaign-hq folder.
 license: MIT
-compatibility: Designed for Claude Code with Fable 5.1 or Opus 5 as conductor. OpenAI Codex CLI and the Antigravity CLI are optional; without them, route implementation work to Claude workers and skip third-model review.
+compatibility: Designed for Claude Code with Fable 5.1 or Opus 5 as conductor. OpenAI Codex CLI is optional, as are the agy, grok, and muse CLIs; without them, route implementation work to Claude workers and skip other-family review.
 metadata:
   author: jvogan
-  version: "0.8.0"
+  version: "0.8.1"
 ---
 
 # Campaign Conductor
@@ -76,7 +76,8 @@ Run preflight once at kickoff and record the result in `preferences.md`:
 
 - Codex CLI: `codex --version`, `codex login status`, and the default-model
   smoke test in [Codex dispatch](references/codex-dispatch.md)
-- Antigravity CLI when the user has it: `agy --version`
+- Other agent CLIs when the user has them: `agy --version`, `grok --version`,
+  `muse --version`
 - GitHub CLI when CI gates matter: `gh auth status`
 - Project verification command: run the actual build/test/lint command workers
   will use
@@ -122,6 +123,7 @@ names.
 |---|---|---|
 | Planning, architecture synthesis, integration judgment, final review | Fable 5.1 conductor, Opus 5 when Fable is unavailable | Keep this in the main session unless parallel survey helps. |
 | Implementation, refactors, tests, scripts, debugging | Codex CLI on `gpt-6-astra` at `high` | The worker may fan out. Read [Codex dispatch](references/codex-dispatch.md) before dispatching. |
+| Consultation: architecture questions, design second opinions, read-only review of a Claude worker's diff | Codex CLI on `gpt-6-astra` at `xhigh`, read-only sandbox | The consultant reads and advises without writing. Stay off `ultra`, which delegates on its own. See [Review gates](references/review-gates.md). |
 | Leaves that need design care, when a lead fans out | `astra` role: `gpt-6-astra` at `medium` | Features, bug fixes, and tests with real design content. |
 | Everyday and throughput leaves, when a lead fans out | `terra` role: `gpt-5.6-terra` at `xhigh`; `luna` role: `gpt-5.6-luna` at `xhigh` | Terra for routine implementation, luna for mechanical refactors, fixtures, search, small tests. |
 | Second opinion inside a fan-out | `sol` role: `gpt-5.6-sol` at `high` | Reviews a sibling leaf's diff or retries a risky task on a different model. |
@@ -129,7 +131,7 @@ names.
 | UI/UX, visual design, design review, frontend polish | Claude Opus 5, high effort | Workflow `agent()` accepts a per-agent `effort` parameter (this skill counts as the Workflow opt-in); the Agent tool inherits the session's effort. |
 | Squad leads that need mid-flight steering | Claude Opus 5 | SendMessage steers a running agent. See [Squads](references/squads.md). |
 | Read-only surveys, quick code search | Claude Sonnet 5, or read-only Codex workers | Use read-only tools and require file/line evidence. |
-| Third-model review, scouting, second opinions | Antigravity CLI (`agy`) on `gemini-3.7-flash-high` | Read-only plan mode. See [Review gates](references/review-gates.md). |
+| Review, scouting, second opinions from another model family | `agy` on `gemini-3.8-flash-high`, `grok` on `grok-4.6` at `high`, or `muse` on `muse-spark-1.3-contributor` at `xhigh` | Read-only. OAuth-backed CLIs; use whichever the user has. See [Review gates](references/review-gates.md). |
 | Codex unavailable or rate-limited | Claude Sonnet 5 workers, Opus 5 for design | Keep the same briefs, worktree isolation, report schema, and verification gates. |
 
 ## Dispatch Rules

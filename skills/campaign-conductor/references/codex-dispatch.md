@@ -52,7 +52,8 @@ run without follow-up questions.
 
 ## Standard Dispatch
 
-Use `read-only` for scouts and reviewers. Use `workspace-write` for writers.
+Use `read-only` for scouts, reviewers, and consultations. Use `workspace-write`
+for writers.
 Keep network on only when the task needs dependency installation, package docs,
 or live research. `workspace-write` keeps `.git` read-only, so a brief that
 requires a commit needs the worktree's `.git` in `writable_roots`; without it
@@ -137,7 +138,10 @@ roles the user names. When it does fan out, the shipped roles are `astra`
 (`gpt-5.6-luna` at `xhigh`) for mechanical refactors, fixtures, search, and
 small tests, and `sol` (`gpt-5.6-sol` at `high`) for a second opinion on a
 sibling's diff or a retry of a risky task. Lead And Leaf Roles below covers the
-files that carry those settings.
+files that carry those settings. Consultations, where the conductor asks Codex
+directly for an architecture answer, a design second opinion, or a read-only
+review of a Claude worker's diff, run `gpt-6-astra` at `xhigh` in the
+`read-only` sandbox; the review gates reference has the invocation.
 
 Astra costs 2.5x Sol per token on API pricing and on plan credits, and its fast
 tier multiplies that again, but it finishes coding tasks in far fewer tokens,
@@ -234,7 +238,7 @@ Keep leaves off `ultra` for the same reason: that tier delegates on its own.
 | Live web search | `-c web_search=live` (default is `cached`, an index with no live fetch; `codex exec` has no `--search` flag) | volatile facts, current APIs, advisories, versions |
 | Image input | `-i current.png -i target.png` | UI bug reproduction from screenshots and mocks |
 | Image generation | prompt the built-in `image_gen` tool | asset generation; the tool saves under `~/.codex/generated_images/<session>/`, so the brief must require copying the file into the repo and verifying it exists |
-| Review mode | `codex exec review --base <ref>` | read-only review gate |
+| Review mode | `codex exec review --base <ref> -m gpt-6-astra -c model_reasoning_effort=xhigh` | read-only review gate on the consultation model |
 | Session continuation | `codex exec resume <session-id> "<correction>"` | incremental steering after a finished run |
 | Native subagents | prompt the built-in multi-agent tools (`spawn_agent`, `wait_agent`, `send_input`, `close_agent`); role files in `.codex/agents/` set each leaf's model and effort; leaves without a role inherit the lead's | a codex worker fans out its own parallel subagents inside one workspace; see Lead And Leaf Roles above and the squads reference |
 

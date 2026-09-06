@@ -53,29 +53,51 @@ Claude workers should end with a fenced JSON block matching the same schema.
 
 ## Cross-Model Review
 
-Author and reviewer must be separate. Three model families can review: Claude,
-Codex, and Gemini through the Antigravity CLI.
+Author and reviewer must be separate. Model families that can review: Claude,
+Codex, and Gemini, Grok, or Muse through their OAuth-backed CLIs.
 
-- After a Codex worker lands a high-risk diff, dispatch a Claude reviewer or an
-  Antigravity review.
-- After a Claude worker lands a high-risk diff, run a Codex read-only review.
+- After a Codex worker lands a high-risk diff, dispatch a Claude reviewer or a
+  review from one of the other CLIs.
+- After a Claude worker lands a high-risk diff, run a Codex consultation:
+  read-only on `gpt-6-astra` at `xhigh`.
 - After each wave integration, review the merged result to catch semantic
   conflicts that appear only after individually valid branches combine.
 
 High-risk means auth, permissions, billing, data migration, shared state,
 security boundaries, persistent storage, or broad refactors.
 
-Read-only Antigravity review:
+Codex consultation, also the model for architecture questions and design
+second opinions:
 
 ```bash
-agy --model gemini-3.7-flash-high --mode plan --sandbox \
-  --dangerously-skip-permissions --add-dir "$PWD" --print-timeout 20m \
-  -p="<prompt>"
+codex exec -s read-only -m gpt-6-astra -c model_reasoning_effort=xhigh \
+  -C "$PWD" - < docs/campaign-hq/briefs/<task>.md
 ```
 
-Attach `-p` to its value with `=`. Omit `--effort` in plan mode. For a
-write-mode agent, swap `--mode plan --sandbox` for `--effort high --mode
-accept-edits`. Check `agy --help` for the installed version.
+`codex exec review --base <ref>` runs the built-in review flow and takes the
+same `-m` and `-c` flags. Keep the consultant off `ultra`: that tier delegates
+on its own, and a consultation is one model reading and advising.
+
+Read-only review from another model family, whichever CLI the user has:
+
+```bash
+agy --model gemini-3.8-flash-high --mode plan --sandbox \
+  --dangerously-skip-permissions --add-dir "$PWD" --print-timeout 20m \
+  -p="<prompt>"
+
+grok -m grok-4.6 --effort high --permission-mode plan --cwd "$PWD" \
+  --disable-web-search --no-subagents --max-turns 40 --prompt-file <brief>
+
+muse exec --trust-workspace --model muse-spark-1.3-contributor \
+  --reasoning-effort xhigh --workspace "$PWD" --user-input-auto-resolve \
+  --prompt-file <brief>
+```
+
+For `agy`, attach `-p` to its value with `=` and omit `--effort` in plan mode,
+since the tier is part of the slug; a write-mode agent swaps `--mode plan
+--sandbox` for `--effort high --mode accept-edits`. `muse` keeps its sandbox
+and approval prompts on by default, and its headless options go after `exec`.
+Check each CLI's `--help` for the installed version.
 
 Without a second model available, substitute a fresh reviewer agent that did
 not author the diff. Weaker than a different model, still far better than

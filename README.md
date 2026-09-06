@@ -19,9 +19,12 @@ By default a Codex worker runs on `gpt-6-astra` at `high` reasoning effort and
 either finishes the task alone or fans out. When it fans out, four shipped
 roles cover the leaves: `gpt-6-astra` at `medium` for substantive
 implementation, `gpt-5.6-terra` and `gpt-5.6-luna` at `xhigh` for everyday and
-throughput work, and `gpt-5.6-sol` at `high` for a second opinion. The
-Antigravity CLI on `gemini-3.7-flash-high` adds a third model family for
-read-only reviews, scouts, and second opinions.
+throughput work, and `gpt-5.6-sol` at `high` for a second opinion. For
+consultation (architecture questions, design second opinions, and read-only
+review of a Claude worker's diff) the conductor calls `gpt-6-astra` at
+`xhigh`. Other OAuth-backed CLIs add further model families for read-only
+reviews, scouts, and second opinions: `agy` (Gemini 3.8 Flash at `high`),
+`grok` (Grok 4.6 at `high`), and `muse` (Meta Muse Spark 1.3 at `xhigh`).
 
 One session directs the whole effort: workers spend their own context on
 implementation while the conductor's stays free for judgment, git worktrees
@@ -43,11 +46,12 @@ Runs a project as an orchestrated campaign.
 - **Routing.** Fable 5.1 or Opus 5 stays on planning, judgment, verification,
   and memory. Codex on `astra` handles implementation, tests, research, and
   mechanical refactors, alone for a single task or fanning out to `astra`,
-  `terra`, `luna`, and `sol` leaves when the work splits. Claude Sonnet 5
-  agents take read-only surveys and the implementation role when Codex is
-  unavailable or exhausted, using the same briefs and reports. Live worker,
-  model, and effort requests win over defaults, are written to
-  `preferences.md`, and persist across sessions.
+  `terra`, `luna`, and `sol` leaves when the work splits, and answers
+  consultations read-only at `xhigh`. Claude Sonnet 5 agents take read-only
+  surveys and the implementation role when Codex is unavailable or exhausted,
+  using the same briefs and reports. Live worker, model, and effort requests
+  win over defaults, are written to `preferences.md`, and persist across
+  sessions.
 - **Campaign sizing.** Small projects get a directly written plan. Large or
   unfamiliar ones get a parallel survey fan-out that drafts the plan for
   sign-off first.
@@ -62,8 +66,8 @@ Runs a project as an orchestrated campaign.
   shapes: an Opus 5 lead running Codex workers across worktrees, and a Codex
   `astra` lead running `astra` and `luna` leaves in one workspace.
 - **Review gates.** Fixed-schema worker reports, cross-model review across
-  three model families (Claude, Codex, and Gemini through the Antigravity CLI),
-  and same-brief bake-offs judged on artifacts for high-stakes tasks.
+  model families (Claude, Codex, and Gemini, Grok, or Muse through their
+  CLIs), and same-brief bake-offs judged on artifacts for high-stakes tasks.
 - **Worker capabilities.** Doctrine covers Codex web search for research
   scouts, image input for UI fixes from screenshots, native image generation
   for assets, and review mode.
@@ -180,11 +184,13 @@ the campaign automatically. Direct it in plain language:
   Without Codex installed, the skill runs Claude-only fleets: Sonnet 5 workers
   take the implementation role, Opus 5 keeps design and squad-lead duty, and
   the briefs, worktrees, squads, and reports stay the same.
-- **Antigravity CLI** (optional, [antigravity.google](https://antigravity.google)).
-  Adds a third model family for review. The conductor runs `agy` on
-  `gemini-3.7-flash-high` in read-only plan mode for reviews, scouts, and
-  second opinions. Without it, cross-model review runs between Claude and
-  Codex.
+- **Other agent CLIs** (optional). Each adds a model family for read-only
+  reviews, scouts, and second opinions, and each signs in with OAuth against a
+  consumer account: the Antigravity CLI `agy`
+  ([antigravity.google](https://antigravity.google)) on
+  `gemini-3.8-flash-high`, Grok Build `grok` on `grok-4.6` at `high`, and
+  Meta's Muse Code `muse` on `muse-spark-1.3-contributor` at `xhigh`.
+  Without them, cross-model review runs between Claude and Codex.
 - **Codex plugin for Claude Code** (optional,
   [github.com/openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc)).
   Adds `/codex:review`, `/codex:adversarial-review`, and background-delegation
