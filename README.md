@@ -16,13 +16,13 @@ Claude Opus 5 agents for design judgment, then integrates, reviews, and verifies
 what comes back.
 
 Codex work runs on `gpt-6-astra`, and the reasoning effort does the routing:
-`medium` for read-only scouts, `high` for the default worker, `xhigh` for
+`low` for read-only scouts, `medium` for the default worker, `high` for
 consultation (architecture questions, design second opinions, and read-only
-review of a Claude worker's diff), `max` for bake-off judging and final
-arbitration, and `ultra` for a hard task that Astra should split on its own.
+review of a Claude worker's diff), `xhigh` for bake-off judging and final
+arbitration, and `max` for a hard task the lead is briefed to split.
 A worker either finishes the task alone or fans out to three shipped leaf
 roles: `feature` (`gpt-6-astra` at `medium`) for work that needs judgment,
-`critic` (`gpt-6-astra` at `xhigh`, read-only) for a second opinion on a
+`critic` (`gpt-6-astra` at `high`, read-only) for a second opinion on a
 sibling's diff, and `grunt` (`gpt-5.6-luna` at `xhigh`) for mechanical work,
 where Luna's price conserves Astra usage. Other OAuth-backed CLIs add further model families for read-only
 reviews, scouts, and second opinions: `agy` (Gemini 3.8 Flash at `high`),
@@ -49,7 +49,7 @@ Runs a project as an orchestrated campaign.
   and memory. Codex on Astra handles implementation, tests, research, and
   mechanical refactors, alone for a single task or fanning out to `feature`,
   `critic`, and `grunt` leaves when the work splits, and answers
-  consultations read-only at `xhigh`. Claude Sonnet 5 agents take read-only
+  consultations read-only at `high`. Claude Sonnet 5 agents take read-only
   surveys and the implementation role when Codex is unavailable or exhausted,
   using the same briefs and reports. Live worker, model, and effort requests
   win over defaults, are written to `preferences.md`, and persist across
@@ -165,16 +165,17 @@ the campaign automatically. Direct it in plain language:
 
   ```toml
   model = "gpt-6-astra"
-  model_reasoning_effort = "high"
+  model_reasoning_effort = "medium"
   ```
 
   Reasoning runs a ladder (`low`, `medium`, `high`, `xhigh`, `max`, `ultra`),
   and Codex lists `gpt-6-astra` above the `gpt-5.6` line (`sol`, `terra`,
-  `luna`). `high` on Astra is a sound default; reserve `max` for judging and
-  arbitration and `ultra` for the hardest tasks, and note that `ultra`
-  delegates to subagents on its own. Override per task in plain language ("use ultra
-  Codex for this wave", "send the mechanical refactor to the fast model"): the
-  conductor writes the request to `preferences.md`, where it persists.
+  `luna`). `medium` on Astra is a sound default; reserve `xhigh` for judging
+  and arbitration and `max` for the hardest tasks. `ultra` delegates to
+  subagents on its own, so it runs only on an explicit request. Override per
+  task in plain language ("use ultra Codex for this wave", "send the
+  mechanical refactor to the fast model"): the conductor writes the request to
+  `preferences.md`, where it persists.
 
   Role files cover a worker that fans out. Bootstrap copies `feature.toml`,
   `critic.toml`, and `grunt.toml` into the project's `.codex/agents/`, and

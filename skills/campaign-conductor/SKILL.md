@@ -15,7 +15,7 @@ license: MIT
 compatibility: Designed for Claude Code with Fable 5.1 or Opus 5 as conductor. OpenAI Codex CLI is optional, as are the agy, grok, and muse CLIs; without them, route implementation work to Claude workers and skip other-family review.
 metadata:
   author: jvogan
-  version: "0.9.0"
+  version: "0.9.1"
 ---
 
 # Campaign Conductor
@@ -122,17 +122,17 @@ names.
 | Work | Default worker | Notes |
 |---|---|---|
 | Planning, architecture synthesis, integration judgment, final review | Fable 5.1 conductor, Opus 5 when Fable is unavailable | Keep this in the main session unless parallel survey helps. |
-| Implementation, refactors, tests, scripts, debugging | Codex CLI on `gpt-6-astra` at `high` | The worker may fan out. Read [Codex dispatch](references/codex-dispatch.md) before dispatching. |
-| Consultation: architecture questions, design second opinions, read-only review of a Claude worker's diff | Codex CLI on `gpt-6-astra` at `xhigh`, read-only sandbox | The consultant reads and advises without writing. Stay off `ultra`, which delegates on its own. See [Review gates](references/review-gates.md). |
-| Hard task that splits many ways | Codex CLI on `gpt-6-astra` at `ultra`, own worktree | Astra plans and delegates on its own and returns one branch. Never give `ultra` to a leaf or a consultant. |
-| Bake-off judging, final arbitration between a critic and an author | Codex CLI on `gpt-6-astra` at `max`, read-only sandbox | Give it diffs and verification output, with criteria set before dispatch. |
+| Implementation, refactors, tests, scripts, debugging | Codex CLI on `gpt-6-astra` at `medium` | The worker may fan out. Read [Codex dispatch](references/codex-dispatch.md) before dispatching. |
+| Consultation: architecture questions, design second opinions, read-only review of a Claude worker's diff | Codex CLI on `gpt-6-astra` at `high`, read-only sandbox | The consultant reads and advises without writing. See [Review gates](references/review-gates.md). |
+| Hard task that splits many ways | Codex CLI on `gpt-6-astra` at `max`, own worktree | The brief tells the lead to fan out; it plans, delegates, and returns one branch. `ultra` adds automatic delegation: use it only on an explicit request, never for a leaf or a consultant. |
+| Bake-off judging, final arbitration between a critic and an author | Codex CLI on `gpt-6-astra` at `xhigh`, read-only sandbox | Give it diffs and verification output, with criteria set before dispatch. |
 | Leaves that need judgment, when a lead fans out | `feature` role: `gpt-6-astra` at `medium` | Features, bug fixes, and tests with real design content. |
-| Second opinion inside a fan-out | `critic` role: `gpt-6-astra` at `xhigh`, read-only by role file | Reviews a sibling leaf's diff in a fresh session. A different model family comes from the review gates. |
+| Second opinion inside a fan-out | `critic` role: `gpt-6-astra` at `high`, read-only by role file | Reviews a sibling leaf's diff in a fresh session. A different model family comes from the review gates. |
 | Grunt work, when a lead fans out | `grunt` role: `gpt-5.6-luna` at `xhigh` | Mechanical refactors, fixtures, search, small tests. Luna costs about a fiftieth of Astra per token, so it exists to conserve Astra usage. Raise it to `max` when a mechanical task fails verification. |
 | Astra not yet enabled on the account | Codex CLI on `gpt-5.6-sol` at `high` | Same briefs and roles. Record the fallback in `preferences.md`. |
 | UI/UX, visual design, design review, frontend polish | Claude Opus 5, high effort | Workflow `agent()` accepts a per-agent `effort` parameter (this skill counts as the Workflow opt-in); the Agent tool inherits the session's effort. |
 | Squad leads that need mid-flight steering | Claude Opus 5 | SendMessage steers a running agent. See [Squads](references/squads.md). |
-| Read-only surveys, quick code search, research scouting | Claude Sonnet 5, or Codex CLI on `gpt-6-astra` at `medium` in the read-only sandbox (`-c web_search=live` for research) | Require file/line evidence. |
+| Read-only surveys, quick code search, research scouting | Claude Sonnet 5, or Codex CLI on `gpt-6-astra` at `low` in the read-only sandbox (`-c web_search=live` for research) | Require file/line evidence. |
 | Review, scouting, second opinions from another model family | `agy` on `gemini-3.8-flash-high`, `grok` on `grok-4.6` at `high`, or `muse` on `muse-spark-1.3-contributor` at `xhigh` | Read-only. OAuth-backed CLIs; use whichever the user has. See [Review gates](references/review-gates.md). |
 | Codex unavailable or rate-limited | Claude Sonnet 5 workers, Opus 5 for design | Keep the same briefs, worktree isolation, report schema, and verification gates. |
 

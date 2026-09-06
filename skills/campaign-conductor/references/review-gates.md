@@ -59,7 +59,7 @@ Codex, and Gemini, Grok, or Muse through their OAuth-backed CLIs.
 - After a Codex worker lands a high-risk diff, dispatch a Claude reviewer or a
   review from one of the other CLIs.
 - After a Claude worker lands a high-risk diff, run a Codex consultation:
-  read-only on `gpt-6-astra` at `xhigh`.
+  read-only on `gpt-6-astra` at `high`.
 - After each wave integration, review the merged result to catch semantic
   conflicts that appear only after individually valid branches combine.
 
@@ -71,7 +71,7 @@ second opinions. Inside a Codex fan-out the same review runs as a `critic`
 leaf, read-only by role file:
 
 ```bash
-codex exec -s read-only -m gpt-6-astra -c model_reasoning_effort=xhigh \
+codex exec -s read-only -m gpt-6-astra -c model_reasoning_effort=high \
   -C "$PWD" - < docs/campaign-hq/briefs/<task>.md
 ```
 
@@ -110,10 +110,10 @@ For a high-stakes task with uncertain solution shape, dispatch the same brief to
 two workers in separate worktrees. Pair model families by default: Codex on
 `gpt-6-astra` against Claude Opus 5. Give a judge explicit criteria before
 dispatch, correctness first. The judge is the conductor, or a read-only Codex
-arbiter on `gpt-6-astra` at `max`:
+arbiter on `gpt-6-astra` at `xhigh`:
 
 ```bash
-codex exec -s read-only -m gpt-6-astra -c model_reasoning_effort=max \
+codex exec -s read-only -m gpt-6-astra -c model_reasoning_effort=xhigh \
   -C "$PWD" - < docs/campaign-hq/briefs/<task>-judge.md
 ```
 

@@ -2,9 +2,9 @@
 <!-- Precedence: user's live instruction > this file > skill defaults.
      Update this file whenever the user states a preference. -->
 - Conductor: Fable 5.1, or Opus 5 at high effort when Fable is unavailable
-- Implementation, tests, research: codex on gpt-6-astra at high effort; fan out only when the task splits
-- Codex leaves when it fans out: feature (astra, medium) for engine and tokenizer work; grunt (luna, xhigh) for fixtures and mechanical edits; critic (astra, xhigh) on the engine diff
-- Consultation: codex on gpt-6-astra at xhigh, read-only; used for the index layout question
+- Implementation, tests, research: codex on gpt-6-astra at medium effort; fan out only when the task splits
+- Codex leaves when it fans out: feature (astra, medium) for engine and tokenizer work; grunt (luna, xhigh) for fixtures and mechanical edits; critic (astra, high) on the engine diff
+- Consultation: codex on gpt-6-astra at high, read-only; used for the index layout question
 - UI/UX, design: claude opus 5, high effort
 - Quick search and read-only surveys: claude sonnet 5
 - Other-family review: agy on gemini-3.8-flash-high, read-only; used on the ranking diff

@@ -119,12 +119,12 @@ lists `gpt-6-astra`, then the `gpt-5.6` line: `sol`, `terra`, and `luna`), the
 reasoning effort (a ladder from `low` through `medium`, `high`, `xhigh`, `max`,
 and `ultra`), and any separate fast-serving tier. Not every model accepts every
 effort tier: `luna` stops at `max`. `ultra` is `max` plus automatic delegation,
-so a worker on `ultra` spawns its own subagents. Give it only to a lead that is
-meant to fan out, never to a leaf.
+so a worker on `ultra` spawns its own subagents. No default shape uses it;
+run it only on an explicit request, for a lead meant to fan out, never a leaf.
 
-Match effort to difficulty instead of maxing every task. A mid tier (`high`) on
-the frontier model is a sound default: a modern frontier model is strong well
-below its top tier, so reserve `max`/`ultra` for work that earns it (thorny
+Match effort to difficulty instead of maxing every task. A mid tier (`medium`)
+on the frontier model is a sound default: a modern frontier model is strong well
+below its top tier, so reserve `xhigh`/`max` for work that earns it (thorny
 architecture, deep debugging, high-stakes correctness, final arbitration, or a
 task that already failed at a lower tier), and route mechanical or throughput
 work to a faster variant. A cheap model on genuinely hard work produces rework,
@@ -135,17 +135,17 @@ shape the conductor calls directly runs on `gpt-6-astra`:
 
 | Shape | Effort | Sandbox | Use |
 |---|---|---|---|
-| Scout | `medium` | `read-only`, `-c web_search=live` for research | surveys, current APIs, advisories |
-| Lead | `high` | `workspace-write` | the default worker; runs alone or fans out |
-| Consultant | `xhigh` | `read-only` | architecture answers, design second opinions, review of a Claude worker's diff |
-| Arbiter | `max` | `read-only` | bake-off judging, final arbitration between a critic and an author |
-| Self-organizing lead | `ultra` | `workspace-write`, own worktree | a hard task that splits many ways; Astra plans, delegates, and returns one branch |
+| Scout | `low` | `read-only`, `-c web_search=live` for research | surveys, current APIs, advisories |
+| Lead | `medium` | `workspace-write` | the default worker; runs alone or fans out |
+| Consultant | `high` | `read-only` | architecture answers, design second opinions, review of a Claude worker's diff |
+| Arbiter | `xhigh` | `read-only` | bake-off judging, final arbitration between a critic and an author |
+| Fan-out lead | `max` | `workspace-write`, own worktree | a hard task that splits many ways; the brief tells the lead to fan out, and it plans, delegates, and returns one branch |
 
 The default when the user has specified nothing is the lead shape. A worker on
 that default may run the task alone, spawn one role, or spawn the roles the
 user names. When it does fan out, the shipped roles are `feature` (`gpt-6-astra`
 at `medium`) for implementation that needs judgment, `critic` (`gpt-6-astra` at
-`xhigh`, read-only) for a second opinion on a sibling's diff, and `grunt`
+`high`, read-only) for a second opinion on a sibling's diff, and `grunt`
 (`gpt-5.6-luna` at `xhigh`) for mechanical refactors, fixtures, search, and
 small tests. Lead And Leaf Roles below covers the files that carry those
 settings. The review gates reference has the consultant invocation.
@@ -201,7 +201,7 @@ model_reasoning_effort = "medium"
 | Role | Model | Effort | Sandbox | Leaf work |
 |---|---|---|---|---|
 | `feature` | `gpt-6-astra` | `medium` | inherited | Features, bug fixes, and tests that need judgment. Medium is Astra's default tier. |
-| `critic` | `gpt-6-astra` | `xhigh` | `read-only`, set in the file | Second opinion on a sibling leaf's diff from a fresh session. The role file enforces read-only, so the critic cannot patch what it reviews. |
+| `critic` | `gpt-6-astra` | `high` | `read-only`, set in the file | Second opinion on a sibling leaf's diff from a fresh session. The role file enforces read-only, so the critic cannot patch what it reviews. |
 | `grunt` | `gpt-5.6-luna` | `xhigh` | inherited | Mechanical refactors, fixtures, search, small tests. Raise to `max` when a mechanical task fails verification; `luna` stops there. |
 
 The role file carries the model and effort, so a lead brief can name roles
@@ -215,7 +215,7 @@ flags to use the CLI's configured default.
 ```bash
 codex exec --json -s workspace-write \
   -c approval_policy=never \
-  -m gpt-6-astra -c model_reasoning_effort=high \
+  -m gpt-6-astra -c model_reasoning_effort=medium \
   -c agents.max_concurrent_threads_per_session=<cap> \
   -c 'sandbox_workspace_write.writable_roots=["<worktree>/.git"]' \
   --output-schema docs/campaign-hq/schemas/worker-result.json \
@@ -247,7 +247,7 @@ Keep leaves off `ultra` for the same reason: that tier delegates on its own.
 | Live web search | `-c web_search=live` (default is `cached`, an index with no live fetch; `codex exec` has no `--search` flag) | volatile facts, current APIs, advisories, versions |
 | Image input | `-i current.png -i target.png` | UI bug reproduction from screenshots and mocks |
 | Image generation | prompt the built-in `image_gen` tool | asset generation; the tool saves under `~/.codex/generated_images/<session>/`, so the brief must require copying the file into the repo and verifying it exists |
-| Review mode | `codex exec review --base <ref> -m gpt-6-astra -c model_reasoning_effort=xhigh` | read-only review gate in the consultant shape |
+| Review mode | `codex exec review --base <ref> -m gpt-6-astra -c model_reasoning_effort=high` | read-only review gate in the consultant shape |
 | Session continuation | `codex exec resume <session-id> "<correction>"` | incremental steering after a finished run |
 | Native subagents | prompt the built-in multi-agent tools (`spawn_agent`, `wait_agent`, `send_input`, `close_agent`); role files in `.codex/agents/` set each leaf's model and effort; leaves without a role inherit the lead's | a codex worker fans out its own parallel subagents inside one workspace; see Lead And Leaf Roles above and the squads reference |
 
