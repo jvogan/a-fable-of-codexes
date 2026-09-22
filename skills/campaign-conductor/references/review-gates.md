@@ -59,19 +59,19 @@ Codex, and Gemini, Grok, or Muse through their OAuth-backed CLIs.
 - After a Codex worker lands a high-risk diff, dispatch a Claude reviewer or a
   review from one of the other CLIs.
 - After a Claude worker lands a high-risk diff, run a Codex consultation:
-  read-only on `gpt-6-astra` at `high`.
+  read-only on `gpt-6-sol` at `high`.
 - After each wave integration, review the merged result to catch semantic
   conflicts that appear only after individually valid branches combine.
 
 High-risk means auth, permissions, billing, data migration, shared state,
 security boundaries, persistent storage, or broad refactors.
 
-Codex consultation, also the shape for architecture questions and design
-second opinions. Inside a Codex fan-out the same review runs as a `critic`
-leaf, read-only by role file:
+Codex consultation, also the shape for architecture questions. Inside a Sol
+fan-out the same review runs as a `critic` leaf (Sol at `medium`), read-only
+by role file:
 
 ```bash
-codex exec -s read-only -m gpt-6-astra -c model_reasoning_effort=high \
+codex exec -s read-only -m gpt-6-sol -c model_reasoning_effort=high \
   -C "$PWD" - < docs/campaign-hq/briefs/<task>.md
 ```
 
@@ -79,26 +79,37 @@ codex exec -s read-only -m gpt-6-astra -c model_reasoning_effort=high \
 same `-m` and `-c` flags. Keep the consultant off `ultra`: that tier delegates
 on its own, and a consultation is one model reading and advising.
 
-Read-only review from another model family, whichever CLI the user has:
+When the user explicitly asks for an exceptional effort on a rare, very hard
+question, run the same command with `-m gpt-6-astra -c
+model_reasoning_effort=max`. Give it the question, the relevant files, and the
+conductor's current answer, and ask for an independent answer with its
+reasoning. The conductor weighs both; Astra's answer does not override
+verification.
+
+Read-only review from another model family, whichever CLI the user has.
+These reviewers are optional and roughly Luna-tier; use them for a different
+family's perspective, not as the primary review:
 
 ```bash
 agy --model gemini-3.8-flash-high --mode plan --sandbox \
   --dangerously-skip-permissions --add-dir "$PWD" --print-timeout 20m \
   -p="<prompt>"
 
-grok -m grok-4.6 --effort high --permission-mode plan --cwd "$PWD" \
-  --disable-web-search --no-subagents --max-turns 40 --prompt-file <brief>
+grok -m grok-4.7 --effort xhigh --permission-mode plan --cwd "$PWD" \
+  --no-subagents --prompt-file <brief> < /dev/null
 
-muse exec --trust-workspace --model muse-spark-1.3-contributor \
-  --reasoning-effort xhigh --workspace "$PWD" --user-input-auto-resolve \
-  --prompt-file <brief>
+muse exec --workspace "$PWD" --trust-workspace \
+  --model muse-spark-1.3-contributor --reasoning-effort max \
+  --disable-write --prompt-file <brief> < /dev/null
 ```
 
 For `agy`, attach `-p` to its value with `=` and omit `--effort` in plan mode,
 since the tier is part of the slug; a write-mode agent swaps `--mode plan
 --sandbox` for `--effort high --mode accept-edits`. `muse` keeps its sandbox
 and approval prompts on by default, and its headless options go after `exec`.
-Check each CLI's `--help` for the installed version.
+Close stdin with `< /dev/null` on headless `grok` and `muse` runs: from a
+backgrounded shell they can otherwise exit with no output. Check each CLI's
+`--help` for the installed version.
 
 Without a second model available, substitute a fresh reviewer agent that did
 not author the diff. Weaker than a different model, still far better than
@@ -108,12 +119,12 @@ self-review. Author and reviewer stay separate in every gate.
 
 For a high-stakes task with uncertain solution shape, dispatch the same brief to
 two workers in separate worktrees. Pair model families by default: Codex on
-`gpt-6-astra` against Claude Opus 5. Give a judge explicit criteria before
+`gpt-6-sol` against Claude Opus 5.5. Give a judge explicit criteria before
 dispatch, correctness first. The judge is the conductor, or a read-only Codex
-arbiter on `gpt-6-astra` at `xhigh`:
+arbiter on `gpt-6-sol` at `xhigh`:
 
 ```bash
-codex exec -s read-only -m gpt-6-astra -c model_reasoning_effort=xhigh \
+codex exec -s read-only -m gpt-6-sol -c model_reasoning_effort=xhigh \
   -C "$PWD" - < docs/campaign-hq/briefs/<task>-judge.md
 ```
 

@@ -9,112 +9,83 @@
 [![release](https://img.shields.io/github/v/release/jvogan/a-fable-of-codexes?labelColor=333&color=e2694e)](https://github.com/jvogan/a-fable-of-codexes/releases)
 [![license](https://img.shields.io/badge/license-MIT-blue?labelColor=333)](LICENSE)
 
-Claude Code skills that make Claude (Fable 5.1, or Opus 5 when Fable is
-unavailable) the conductor of an AI worker fleet. The conductor surveys and
-plans, dispatches many parallel OpenAI Codex CLI workers for implementation and
-Claude Opus 5 agents for design judgment, then integrates, reviews, and verifies
-what comes back.
+A Claude Code skill that makes Claude the conductor of a fleet of OpenAI Codex
+workers. Claude Fable 5.1 plans the work, dispatches parallel Codex workers on
+GPT-6 Sol to implement it, and verifies every branch before it merges. Each Sol
+worker can run its own team of up to five Sol and Luna agents, and Claude Opus 5.5
+agents handle design and lead squads of Sol workers.
 
-Codex work runs on `gpt-6-astra`, and the reasoning effort does the routing:
-`low` for read-only scouts, `medium` for the default worker, `high` for
-consultation (architecture questions, design second opinions, and read-only
-review of a Claude worker's diff), `xhigh` for bake-off judging and final
-arbitration, and `max` for a hard task the lead is briefed to split.
-A worker either finishes the task alone or fans out to three shipped leaf
-roles: `feature` (`gpt-6-astra` at `medium`) for work that needs judgment,
-`critic` (`gpt-6-astra` at `high`, read-only) for a second opinion on a
-sibling's diff, and `grunt` (`gpt-5.6-luna` at `xhigh`) for mechanical work,
-where Luna's price conserves Astra usage. Other OAuth-backed CLIs add further model families for read-only
-reviews, scouts, and second opinions: `agy` (Gemini 3.8 Flash at `high`),
-`grok` (Grok 4.6 at `high`), and `muse` (Meta Muse Spark 1.3 at `xhigh`).
+The conductor's context stays free for planning and judgment because workers
+spend their own context on implementation. Git worktrees let many writers work
+in parallel without collisions, and campaign state lives in the repo, so a
+later session resumes mid-campaign without setup.
 
-One session directs the whole effort: workers spend their own context on
-implementation while the conductor's stays free for judgment, git worktrees
-let many writers land in parallel without collisions, and campaign state
-lives in the repo so any later session resumes mid-campaign without setup.
+## The fleet
 
-## Skills
+| Role | Model and effort | Job |
+|---|---|---|
+| Conductor | Claude Fable 5.1, high (Opus 5.5 when Fable is unavailable) | Plans, dispatches, integrates, and verifies. Writes no feature code. |
+| Worker | Codex `gpt-6-sol`, `high` | Implements a task in its own worktree, alone or with a team of up to five leaves. |
+| Leaf | `feature`: Sol `high`; `critic`: Sol `medium`, read-only; `grunt`: `gpt-6-luna` `max` | Takes one slice of a Sol worker's task: judgment work, review of a sibling's diff, or mechanical work. |
+| Design agent and squad lead | Claude Opus 5.5, high | UI/UX and design review; leads a squad of Sol workers toward one integration branch. |
+| Consultant and arbiter | Codex `gpt-6-sol`, `high` or `xhigh`, read-only | Reviews Claude diffs, answers architecture questions, judges bake-offs. |
+| Deep consult | Codex `gpt-6-astra`, `max`, read-only | Runs only when you ask for an exceptional effort on a rare, very hard question. |
+| Scout | Claude Opus 5.5 at medium, or Codex `gpt-6-luna` `max`, read-only | Surveys the codebase and researches current APIs. |
+| Other-family reviewers (optional) | `agy` Gemini 3.8 Flash high, `grok` Grok 4.7 xhigh, `muse` Muse Spark 1.3 Contributor max | Read-only second opinions from another model family. |
 
-### [campaign-conductor](skills/campaign-conductor/SKILL.md)
+Without Codex, Opus 5.5 workers at medium take the implementation role and every other
+part of the campaign stays the same.
 
-Runs a project as an orchestrated campaign.
+```mermaid
+flowchart TD
+    C[Fable 5.1 conductor] -->|task briefs| W["Sol workers ×N<br>each runs ≤5 leaves<br>in its own worktree"]
+    C -->|sub-goal briefs| L[Opus 5.5 squad lead]
+    L --> LS["Sol workers ×N<br>each runs ≤5 leaves<br>in its own worktree"]
+    LS --> I[campaign/&lt;squad&gt;<br>integration branch]
+    W --> V[Conductor merges,<br>re-verifies]
+    I --> V
+    V --> M[(main)]
+```
 
-- **Bootstrap.** First use in a repo copies templates from
-  `assets/campaign-hq/` into `docs/campaign-hq/`: `CAMPAIGN.md` for the plan
-  and fleet table, `LEARNINGS.md` for distilled lessons, `preferences.md` for
-  worker routing, and `schemas/worker-result.json` for reports, plus
-  `.codex/agents/` role files when Codex is installed. It also adds a
-  pointer to the project's CLAUDE.md so later sessions resume from repo state.
-- **Routing.** Fable 5.1 or Opus 5 stays on planning, judgment, verification,
-  and memory. Codex on Astra handles implementation, tests, research, and
-  mechanical refactors, alone for a single task or fanning out to `feature`,
-  `critic`, and `grunt` leaves when the work splits, and answers
-  consultations read-only at `high`. Claude Sonnet 5 agents take read-only
-  surveys and the implementation role when Codex is unavailable or exhausted,
-  using the same briefs and reports. Live worker, model, and effort requests
-  win over defaults, are written to `preferences.md`, and persist across
-  sessions.
-- **Campaign sizing.** Small projects get a directly written plan. Large or
-  unfamiliar ones get a parallel survey fan-out that drafts the plan for
-  sign-off first.
-- **Parallel fleets.** One writer per tree: git worktree and branch per
-  worker, a fleet table tracking every dispatch with its session id,
-  integration handled as its own dispatched task, and big campaigns
-  structured as waves: dispatch, collect, integrate, verify. Finished Codex
-  sessions resume with context intact for incremental corrections.
-- **Squads.** For cohesive sub-goals, a squad lead dispatches its own workers,
-  integrates, verifies, and returns one branch, with a hard depth cap, an
-  exclusive branch namespace, and per-leaf evidence required in its report. Two
-  shapes: an Opus 5 lead running Codex workers across worktrees, and a Codex
-  Astra lead running `feature` and `grunt` leaves in one workspace.
-- **Review gates.** Fixed-schema worker reports, cross-model review across
-  model families (Claude, Codex, and Gemini, Grok, or Muse through their
-  CLIs), and same-brief bake-offs judged on artifacts for high-stakes tasks.
-- **Worker capabilities.** Doctrine covers Codex web search for research
-  scouts, image input for UI fixes from screenshots, native image generation
-  for assets, and review mode.
-- **Permissions.** The worker power envelope is set once at kickoff and
-  recorded (Codex sandbox level, network access, Claude permission mode), so
-  no wave stalls on a mid-run prompt.
-- **Compounding memory.** Every dispatch outcome and user correction is
-  logged, then compacted into standing rules so the files stay cheap to read
-  at session start.
-- **Progressive disclosure.** The main SKILL.md is a short conductor checklist.
-  Detailed Codex dispatch, worktree/wave operations, squads, and review gates
-  live in `references/` and load only when needed.
+## What the skill does
+
+The skill is [campaign-conductor](skills/campaign-conductor/SKILL.md).
+
+- **Bootstrap.** First use in a repo copies templates into `docs/campaign-hq/`
+  and the three leaf role files into `.codex/agents/`, then adds a pointer to
+  the project's CLAUDE.md so later sessions resume from repo state.
+- **Routing.** Defaults follow the fleet table. Say "send tests to Opus" or
+  "run this wave at xhigh" and the conductor writes it to `preferences.md`,
+  where it persists across sessions.
+- **Sizing.** Small projects get a plan written directly. Large or unfamiliar
+  ones get a parallel read-only survey first, and you sign off on the plan
+  before any writer starts.
+- **Parallel waves.** Each writer gets one worktree and branch. A fleet table
+  tracks every dispatch with its session id, and each wave runs dispatch,
+  collect, integrate, verify. A finished Codex session resumes with its
+  context for small corrections.
+- **Leaf teams.** A Sol worker spawns `feature` (bounded judgment), `critic`
+  (read-only review), and `grunt` (mechanical, on Luna) leaves by role name. The
+  role files carry the model and effort, so briefs name roles and a new model
+  generation changes one line per file.
+- **Squads.** An Opus 5.5 lead runs several Sol workers toward one integration
+  branch. Depth stops at conductor, lead, Sol worker, leaf; leaves never spawn.
+- **Review gates.** Every worker returns a fixed-schema JSON report. Codex
+  reviews Claude diffs and Claude reviews Codex diffs, and high-stakes tasks
+  can run as a bake-off judged on diffs and test output.
+- **Permissions.** The Codex sandbox, network access, and Claude permission
+  mode are set once at kickoff and recorded, so a wave never stops on a prompt.
+- **Memory.** Dispatch outcomes and your corrections go into `LEARNINGS.md`
+  and are compacted into standing rules before the file grows expensive.
 
 [`examples/campaign-hq/`](examples/campaign-hq/) shows the state files
-mid-campaign, including a worked worker brief and the report schema.
-
-### Orchestration patterns
+mid-campaign, including a worker brief, a report, and the routing file.
 
 <p align="center">
   <img src="assets/patterns.svg" alt="Fable as conductor: the whole fleet at once, plus panels for the codex fleet, opus design workers, squads, and worktree integration" width="880">
 </p>
 
-The panels are worked examples. Any capable worker can lead, integrate, or
-review, and a campaign composes whatever shape the work needs.
-
-Squads nest the fan-out: a squad lead (Opus 5 or a Codex Astra lead) dispatches
-its own parallel workers, integrates their branches, and hands the conductor one
-verified branch. Tested end to end both ways: a spawned Opus lead ran Codex
-workers in parallel worktrees, each landing its own commit, and a Codex lead
-fanned out its native subagents inside one workspace.
-
-```mermaid
-flowchart TD
-    C[Fable 5.1 conductor] -->|sub-goal briefs| S1[Squad lead · Opus 5]
-    C --> S2[Squad lead · Codex Astra]
-    S1 --> A["Codex workers ×3<br>one worktree each"]
-    S2 --> B["feature + grunt leaves ×3<br>one shared workspace"]
-    A --> I1[campaign/search<br>integration branch]
-    B --> I2[campaign/billing<br>integration branch]
-    I1 --> V[Conductor merges,<br>re-verifies]
-    I2 --> V
-    V --> M[(main)]
-```
-
-Campaign state lives in the project, so any later session resumes it:
+Campaign state lives in the project:
 
 ```
 docs/campaign-hq/
@@ -141,69 +112,67 @@ cp -r /tmp/afoc/skills/campaign-conductor ~/.claude/skills/
 
 ## Use
 
-Install the skill, then say in any project:
+In any project, tell Claude:
 
 > start a campaign
 
-Claude bootstraps `docs/campaign-hq/`, sizes the plan to the project, and
-begins dispatching workers. From then on, every session in that repo picks up
-the campaign automatically. Direct it in plain language:
+Claude creates `docs/campaign-hq/`, sizes the plan to the project, and starts
+dispatching workers. Every later session in that repo resumes the campaign.
+Direct it in plain language:
 
 - "add a phase for the billing migration"
-- "use sonnet for tests from now on" (persists in `preferences.md`)
+- "send tests to Opus from now on" (saved to `preferences.md`)
+- "think as hard as you can and get an Astra second opinion on this race
+  condition" (one read-only `gpt-6-astra` run at `max`)
 - "status" (reads the plan and fleet table)
 
 ## Requirements
 
-- **Claude Code.** The skill uses the Agent and Workflow tools.
+- **Claude Code**, with Fable 5.1 or Opus 5.5 as the session model. The skill
+  uses the Agent and Workflow tools.
 - **OpenAI Codex CLI** ([github.com/openai/codex](https://github.com/openai/codex)).
-  Install with `npm install -g @openai/codex` (or `brew install codex`), then
-  run `codex login`. ChatGPT-plan auth consumes plan usage and limits vary by
-  plan; API-key auth is token-priced. Size worker waves to your available
-  limits and spend tolerance. Set the default worker model and reasoning
-  effort in `~/.codex/config.toml`, for example:
+  Install with `npm install -g @openai/codex` or `brew install codex`, then run
+  `codex login`. ChatGPT-plan auth draws on plan usage, and limits vary by
+  plan; API-key auth is billed per token. Size waves to your limits. Set the
+  worker default in `~/.codex/config.toml`:
 
   ```toml
-  model = "gpt-6-astra"
-  model_reasoning_effort = "medium"
+  model = "gpt-6-sol"
+  model_reasoning_effort = "high"
   ```
 
-  Reasoning runs a ladder (`low`, `medium`, `high`, `xhigh`, `max`, `ultra`),
-  and Codex lists `gpt-6-astra` above the `gpt-5.6` line (`sol`, `terra`,
-  `luna`). `medium` on Astra is a sound default; reserve `xhigh` for judging
-  and arbitration and `max` for the hardest tasks. `ultra` delegates to
-  subagents on its own, so it runs only on an explicit request. Override per
-  task in plain language ("use ultra Codex for this wave", "send the
-  mechanical refactor to the fast model"): the conductor writes the request to
-  `preferences.md`, where it persists.
-
-  Role files cover a worker that fans out. Bootstrap copies `feature.toml`,
-  `critic.toml`, and `grunt.toml` into the project's `.codex/agents/`, and
-  each file sets that role's `model` and `model_reasoning_effort` (the critic
-  also sets `sandbox_mode = "read-only"`). Roles are named for the job, so a
-  new model generation changes one line per file. A lead can then spawn a leaf
-  by role name and skip model strings in the brief. Edit those files or add your own roles; a worker
-  is free to run the task alone.
-
-  Without Codex installed, the skill runs Claude-only fleets: Sonnet 5 workers
-  take the implementation role, Opus 5 keeps design and squad-lead duty, and
-  the briefs, worktrees, squads, and reports stay the same.
+  Effort runs `low`, `medium`, `high`, `xhigh`, `max`, `ultra`. Luna stops at
+  `max`. `ultra` delegates to subagents on its own, so the skill uses it only
+  when you ask.
 - **Other agent CLIs** (optional). Each adds a model family for read-only
-  reviews, scouts, and second opinions, and each signs in with OAuth against a
-  consumer account: the Antigravity CLI `agy`
+  second opinions and signs in with OAuth: the Antigravity CLI `agy`
   ([antigravity.google](https://antigravity.google)) on
-  `gemini-3.8-flash-high`, Grok Build `grok` on `grok-4.6` at `high`, and
-  Meta's Muse Code `muse` on `muse-spark-1.3-contributor` at `xhigh`.
-  Without them, cross-model review runs between Claude and Codex.
+  `gemini-3.8-flash-high`, Grok Build `grok` on `grok-4.7` at `xhigh`, and
+  Meta's Muse Code `muse` on `muse-spark-1.3-contributor` at `max`. Without
+  them, cross-model review runs between Claude and Codex.
 - **Codex plugin for Claude Code** (optional,
   [github.com/openai/codex-plugin-cc](https://github.com/openai/codex-plugin-cc)).
   Adds `/codex:review`, `/codex:adversarial-review`, and background-delegation
-  slash commands for single interactive tasks. Install inside Claude Code:
+  commands for one-off tasks outside a campaign:
 
   ```
   /plugin marketplace add openai/codex-plugin-cc
   /plugin install codex@openai-codex
   ```
+
+## Changing models
+
+Model names live in four places. When a new generation ships, update them
+together:
+
+1. `skills/campaign-conductor/SKILL.md`: the routing table.
+2. `skills/campaign-conductor/references/`: the shape tables and command
+   examples.
+3. `skills/campaign-conductor/assets/`: the role files and `preferences.md`.
+4. `examples/campaign-hq/` and this README.
+
+A campaign already running keeps its own copies in `.codex/agents/` and
+`docs/campaign-hq/preferences.md`; edit those to move it to new models.
 
 ## Validation
 
@@ -212,12 +181,12 @@ python3 scripts/validate.py
 npx --yes skills add . --list
 ```
 
-Checks every skill against the
-[Agent Skills spec](https://agentskills.io/specification): frontmatter
-fields, name format, and description length, plus this repo's 500-line body
-limit and relative-link integrity. The `skills` command verifies that the
-package is discoverable by the installer. CI runs both commands on every push
-and pull request.
+`validate.py` checks each skill against the
+[Agent Skills spec](https://agentskills.io/specification) (frontmatter fields,
+name format, description length), plus this repo's 500-line body limit,
+relative links, and the required keys in every Codex role file. The `skills`
+command confirms the installer can find the package. CI runs both on every
+push and pull request.
 
 ## License
 

@@ -7,6 +7,6 @@
 
 ## Log
 <!-- newest first: date | task | worker | outcome | lesson -->
-- 2026-07-04 | ranking engine | codex | verified, merged | brief included fixture data; zero rework
+- 2026-07-04 | ranking engine | codex sol + 3 leaves | verified, merged | brief included fixture data; zero rework
 - 2026-07-03 | tokenizer | codex | one retry | first brief omitted snake_case cases; extended fixtures
 - 2026-07-03 | indexer | codex | verified, merged | clean run

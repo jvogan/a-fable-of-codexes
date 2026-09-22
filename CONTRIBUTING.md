@@ -10,4 +10,6 @@ Skills live at `skills/<name>/SKILL.md` per the
 - Keep each SKILL.md body under 500 lines. Tighten existing text before
   appending new text.
 - Update `examples/` when a skill's file formats change.
+- When model names change, update every location listed under
+  [Changing models](README.md#changing-models) in one commit.
 - New skills need a README entry describing what they add.

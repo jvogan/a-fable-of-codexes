@@ -2,31 +2,45 @@
 name: campaign-conductor
 description: >-
   Run a project as an orchestrated campaign: Claude as conductor (Fable 5.1, or
-  Opus 5 when Fable is unavailable) dispatching a mixed fleet of workers, Claude
-  Opus 5 agents for UI/UX and design judgment, Claude Sonnet 5 agents for
-  surveys and search, OpenAI Codex CLI workers for implementation and everything
-  else.
+  Opus 5.5 when Fable is unavailable) dispatching OpenAI Codex CLI workers on
+  GPT-6 Sol for implementation, each able to run its own team of up to five
+  Sol and Luna leaves, and Claude Opus 5.5 agents for design judgment and squad leadership.
   Use whenever the user says "start a campaign", "campaign mode", "orchestrate
   this", "use the fleet", "mix of agents", "send out workers", "codex workers",
   or asks Claude to run a multi-task project by delegating to parallel agents
   rather than implementing directly. Also use when resuming work in a repo whose
   CLAUDE.md points at a campaign-hq folder.
 license: MIT
-compatibility: Designed for Claude Code with Fable 5.1 or Opus 5 as conductor. OpenAI Codex CLI is optional, as are the agy, grok, and muse CLIs; without them, route implementation work to Claude workers and skip other-family review.
+compatibility: Designed for Claude Code with Fable 5.1 or Opus 5.5 as conductor. OpenAI Codex CLI with GPT-6 models is expected; without it, route implementation to Claude workers. The agy, grok, and muse CLIs are optional reviewers.
 metadata:
   author: jvogan
-  version: "0.9.1"
+  version: "0.10.0"
 ---
 
 # Campaign Conductor
 
 You are the conductor. The role belongs to the strongest Claude model in the
-session: Fable 5.1 when available, otherwise Opus 5 at high effort. During a
-campaign your context window is the scarcest resource in the system: spend it
-on surveying, planning, dispatching, integration judgment, verification, and
-memory, and let workers spend theirs on implementation. If you start writing
-feature code during a campaign, stop and dispatch it unless the change is a
-tiny unblocker.
+session: Fable 5.1 at high effort when available, otherwise Opus 5.5 at high.
+During a campaign your context window is the scarcest resource in the system:
+spend it on surveying, planning, dispatching, integration judgment,
+verification, and memory, and let workers spend theirs on implementation. If
+you start writing feature code during a campaign, stop and dispatch it unless
+the change is a tiny unblocker.
+
+The default fleet has two kinds of direct reports:
+
+- **Codex Sol workers** (`gpt-6-sol` at `high`) do the implementation. A Sol
+  worker runs a task alone or fans out to at most five leaves through the
+  shipped role files: `feature` and `critic` on Sol, `grunt` on `gpt-6-luna`
+  at `max`.
+- **Opus 5.5 agents** (high effort) take design judgment and squad leadership.
+  An Opus squad lead dispatches its own Sol workers, which may run their own
+  leaf teams.
+
+GPT-6 Astra is outside the default fleet. Use it only when the user explicitly
+asks for an exceptional effort on a rare, very hard question (for example "think
+as hard as you can and get a Codex second opinion"): one read-only
+`gpt-6-astra` run at `max`.
 
 This skill is for Claude Code campaign sessions. If another runtime loads it,
 treat the Claude-specific Agent/Workflow instructions as a pattern and do not
@@ -55,8 +69,8 @@ Load references only when that part of the campaign is active:
 4. Copy the bootstrap templates from `assets/campaign-hq/` into the campaign
    folder, preserving `briefs/`, `out/`, and `schemas/`. When Codex is
    installed, also copy `assets/codex-agents/*.toml` into the project's
-   `.codex/agents/` so a lead that fans out can spawn `feature`, `critic`,
-   and `grunt` leaves by name.
+   `.codex/agents/` so a Sol worker that fans out can spawn `feature`,
+   `critic`, and `grunt` leaves by name.
 5. Add this block to the project `CLAUDE.md` (create the file if missing):
 
 ```markdown
@@ -85,8 +99,8 @@ Run preflight once at kickoff and record the result in `preferences.md`:
   edit permissions
 
 Route around missing tools rather than discovering them mid-wave. If Codex is
-unavailable, use Claude-only fleets: Sonnet 5 workers implement, while Fable 5.1
-or Opus 5 keeps planning, design judgment, integration, and review.
+unavailable, use Claude-only fleets: Opus 5.5 workers at medium effort implement, while Fable 5.1
+or Opus 5.5 keeps planning, design judgment, integration, and review.
 
 ## Plan The Campaign
 
@@ -110,31 +124,32 @@ same turn.
 
 Model, worker, and effort requests are routing preferences. Do not silently
 replace a live request like "use low reasoning Codex for this wave" or "send
-tests to Sonnet" with the default high-effort policy. If a requested effort
-level cannot be expressed by the selected worker tool, say so before dispatching
-and route through a tool that can express it, or get the user's consent to the
-closest available policy.
-
-These are defaults for typical work. Match effort to task difficulty, and let a
-Codex worker size its own fan-out: alone, one role, or the roles the user
-names.
+tests to Opus" with a default. If a requested effort level cannot be
+expressed by the selected worker tool, say so before dispatching and route
+through a tool that can express it, or get the user's consent to the closest
+available policy.
 
 | Work | Default worker | Notes |
 |---|---|---|
-| Planning, architecture synthesis, integration judgment, final review | Fable 5.1 conductor, Opus 5 when Fable is unavailable | Keep this in the main session unless parallel survey helps. |
-| Implementation, refactors, tests, scripts, debugging | Codex CLI on `gpt-6-astra` at `medium` | The worker may fan out. Read [Codex dispatch](references/codex-dispatch.md) before dispatching. |
-| Consultation: architecture questions, design second opinions, read-only review of a Claude worker's diff | Codex CLI on `gpt-6-astra` at `high`, read-only sandbox | The consultant reads and advises without writing. See [Review gates](references/review-gates.md). |
-| Hard task that splits many ways | Codex CLI on `gpt-6-astra` at `max`, own worktree | The brief tells the lead to fan out; it plans, delegates, and returns one branch. `ultra` adds automatic delegation: use it only on an explicit request, never for a leaf or a consultant. |
-| Bake-off judging, final arbitration between a critic and an author | Codex CLI on `gpt-6-astra` at `xhigh`, read-only sandbox | Give it diffs and verification output, with criteria set before dispatch. |
-| Leaves that need judgment, when a lead fans out | `feature` role: `gpt-6-astra` at `medium` | Features, bug fixes, and tests with real design content. |
-| Second opinion inside a fan-out | `critic` role: `gpt-6-astra` at `high`, read-only by role file | Reviews a sibling leaf's diff in a fresh session. A different model family comes from the review gates. |
-| Grunt work, when a lead fans out | `grunt` role: `gpt-5.6-luna` at `xhigh` | Mechanical refactors, fixtures, search, small tests. Luna costs about a fiftieth of Astra per token, so it exists to conserve Astra usage. Raise it to `max` when a mechanical task fails verification. |
-| Astra not yet enabled on the account | Codex CLI on `gpt-5.6-sol` at `high` | Same briefs and roles. Record the fallback in `preferences.md`. |
-| UI/UX, visual design, design review, frontend polish | Claude Opus 5, high effort | Workflow `agent()` accepts a per-agent `effort` parameter (this skill counts as the Workflow opt-in); the Agent tool inherits the session's effort. |
-| Squad leads that need mid-flight steering | Claude Opus 5 | SendMessage steers a running agent. See [Squads](references/squads.md). |
-| Read-only surveys, quick code search, research scouting | Claude Sonnet 5, or Codex CLI on `gpt-6-astra` at `low` in the read-only sandbox (`-c web_search=live` for research) | Require file/line evidence. |
-| Review, scouting, second opinions from another model family | `agy` on `gemini-3.8-flash-high`, `grok` on `grok-4.6` at `high`, or `muse` on `muse-spark-1.3-contributor` at `xhigh` | Read-only. OAuth-backed CLIs; use whichever the user has. See [Review gates](references/review-gates.md). |
-| Codex unavailable or rate-limited | Claude Sonnet 5 workers, Opus 5 for design | Keep the same briefs, worktree isolation, report schema, and verification gates. |
+| Planning, architecture synthesis, integration judgment, final review | Fable 5.1 conductor at high; Opus 5.5 at high when Fable is unavailable | Keep this in the main session unless a parallel survey helps. |
+| Implementation, refactors, tests, scripts, debugging | Codex CLI on `gpt-6-sol` at `high` | The worker sizes its own fan-out: alone, or up to five leaves. Read [Codex dispatch](references/codex-dispatch.md) first. |
+| Judgment leaf work inside a Sol fan-out | `feature` role: `gpt-6-sol` at `high` | A sub-feature, bug fix, or test suite with a clear file boundary. |
+| Second opinion inside a Sol fan-out | `critic` role: `gpt-6-sol` at `medium`, read-only by role file | Reviews a sibling leaf's diff in a fresh session. |
+| Mechanical leaf work inside a Sol fan-out | `grunt` role: `gpt-6-luna` at `max` | Fixtures, renames, search, small tests. Move a task that fails verification twice to `feature`. |
+| UI/UX, visual design, design review, frontend polish | Claude Opus 5.5 at high | Workflow `agent()` accepts a per-agent `effort` parameter (this skill counts as the Workflow opt-in); the Agent tool inherits the session's effort. |
+| Cohesive sub-goal that needs its own integration branch or mid-flight steering | Claude Opus 5.5 squad lead at high, running Sol workers | SendMessage steers a running lead. See [Squads](references/squads.md). |
+| Consultation: architecture questions, read-only review of a Claude worker's diff | Codex CLI on `gpt-6-sol` at `high`, read-only | See [Review gates](references/review-gates.md). |
+| Bake-off judging, final arbitration between a critic and an author | Codex CLI on `gpt-6-sol` at `xhigh`, read-only | Give it diffs and verification output, with criteria set before dispatch. |
+| Read-only surveys, code search, research scouting | Claude Opus 5.5 at medium, or Codex CLI on `gpt-6-luna` at `max` read-only (`-c web_search=live` for research) | Require file/line evidence. |
+| Rare, very hard question on explicit user request | Codex CLI on `gpt-6-astra` at `max`, read-only | Never a default and never a writer. Record the request in the fleet table. |
+| Second opinions from another model family | `agy` on `gemini-3.8-flash-high`, `grok` on `grok-4.7` at `xhigh`, or `muse` on `muse-spark-1.3-contributor` at `max` | Optional, read-only, roughly Luna-tier. See [Review gates](references/review-gates.md). |
+| Codex unavailable or rate-limited | Claude Opus 5.5 workers at medium, Opus 5.5 at high for design | Keep the same briefs, worktree isolation, report schema, and verification gates. |
+
+Opus 5.5 at medium effort needs a Workflow `agent()` call with `effort:
+'medium'`; an Agent-tool subagent inherits the session's effort.
+
+`ultra` effort adds automatic delegation. Use it only on an explicit request,
+and never for a leaf, a consultant, or the Astra run.
 
 ## Dispatch Rules
 
@@ -151,8 +166,10 @@ names.
 - Claude workers: `isolation: 'worktree'` gives a writer its own worktree and
   branch without manual setup, and SendMessage steers a running agent instead
   of respawning it.
-- Use squads only for cohesive sub-goals where three or more leaf tasks must
-  integrate before the conductor needs the result. See [Squads](references/squads.md).
+- A Sol worker's leaf fan-out needs no squad: it happens inside one worktree
+  and returns one commit. Use an Opus squad only for cohesive sub-goals where
+  several Sol workers must integrate before the conductor needs the result.
+  See [Squads](references/squads.md).
 
 ## Collect, Verify, Record
 

@@ -23,15 +23,15 @@ Run once at campaign kickoff:
 ```bash
 codex --version
 codex login status
-codex exec -s read-only -m gpt-6-astra "Reply with the single word ok"
+codex exec -s read-only -m gpt-6-sol "Reply with the single word ok"
+codex exec -s read-only -m gpt-6-luna "Reply with the single word ok"
 ```
 
-Record the result in `preferences.md`. The smoke test confirms the account can
-reach the default model: the GPT-6 Astra rollout is staged by plan, and
-Enterprise workspaces need an admin to enable it. If the model is rejected,
-run the campaign on `gpt-5.6-sol` at `high` and record that. If auth fails or
-limits are exhausted, route implementation work to Claude workers until the
-user changes the setup.
+Record the result in `preferences.md`. The smoke tests confirm the account can
+reach the worker and leaf models; GPT-6 rollouts are staged by plan, and
+Enterprise workspaces need an admin to enable them. If a model is rejected,
+auth fails, or limits are exhausted, route that work to Claude workers until
+the user changes the setup, and record the change.
 
 ## Worker Brief Contract
 
@@ -45,7 +45,7 @@ Every Codex brief must include:
 - Verification command to run from the worktree root
 - Required commit message
 - Required final report schema
-- Instruction not to spawn subagents unless this worker is explicitly a squad lead
+- Fan-out policy: run alone, or spawn at most five named leaves that must not spawn further agents
 
 Codex workers are fire-and-collect. The initial brief must be complete enough to
 run without follow-up questions.
@@ -114,50 +114,40 @@ fail quickly instead of running outside the intended repo.
 
 ## Model And Effort
 
-Three independent controls set a worker's cost and quality: the model (Codex
-lists `gpt-6-astra`, then the `gpt-5.6` line: `sol`, `terra`, and `luna`), the
-reasoning effort (a ladder from `low` through `medium`, `high`, `xhigh`, `max`,
-and `ultra`), and any separate fast-serving tier. Not every model accepts every
-effort tier: `luna` stops at `max`. `ultra` is `max` plus automatic delegation,
-so a worker on `ultra` spawns its own subagents. No default shape uses it;
-run it only on an explicit request, for a lead meant to fan out, never a leaf.
+Three independent controls set a worker's cost and quality: the model, the
+reasoning effort (`low`, `medium`, `high`, `xhigh`, `max`, `ultra`), and the
+optional `fast` service tier, which runs about twice as fast for more usage.
+Codex lists three GPT-6 models:
 
-Match effort to difficulty instead of maxing every task. A mid tier (`medium`)
-on the frontier model is a sound default: a modern frontier model is strong well
-below its top tier, so reserve `xhigh`/`max` for work that earns it (thorny
-architecture, deep debugging, high-stakes correctness, final arbitration, or a
-task that already failed at a lower tier), and route mechanical or throughput
-work to a faster variant. A cheap model on genuinely hard work produces rework,
-so do not under-provision either.
+- `gpt-6-sol`: the campaign worker and the judgment leaves. Default effort in
+  this skill is `high`.
+- `gpt-6-luna`: the mechanical leaf and scout model, at `max`. Efforts stop
+  at `max`.
+- `gpt-6-astra`: the most capable model, outside the default fleet. It runs at
+  `max`, read-only, only when the user explicitly asks for an exceptional
+  effort on a rare, very hard question.
 
-Astra is the working model, and the effort tier does the routing. Every
-shape the conductor calls directly runs on `gpt-6-astra`:
+`ultra` is `max` plus automatic delegation, so a worker on `ultra` spawns its
+own subagents. No default shape uses it; run it only on an explicit request,
+never for a leaf, a consultant, or the Astra run.
 
-| Shape | Effort | Sandbox | Use |
-|---|---|---|---|
-| Scout | `low` | `read-only`, `-c web_search=live` for research | surveys, current APIs, advisories |
-| Lead | `medium` | `workspace-write` | the default worker; runs alone or fans out |
-| Consultant | `high` | `read-only` | architecture answers, design second opinions, review of a Claude worker's diff |
-| Arbiter | `xhigh` | `read-only` | bake-off judging, final arbitration between a critic and an author |
-| Fan-out lead | `max` | `workspace-write`, own worktree | a hard task that splits many ways; the brief tells the lead to fan out, and it plans, delegates, and returns one branch |
+Every shape the conductor or an Opus squad lead calls directly:
 
-The default when the user has specified nothing is the lead shape. A worker on
-that default may run the task alone, spawn one role, or spawn the roles the
-user names. When it does fan out, the shipped roles are `feature` (`gpt-6-astra`
-at `medium`) for implementation that needs judgment, `critic` (`gpt-6-astra` at
-`high`, read-only) for a second opinion on a sibling's diff, and `grunt`
-(`gpt-5.6-luna` at `xhigh`) for mechanical refactors, fixtures, search, and
-small tests. Lead And Leaf Roles below covers the files that carry those
-settings. The review gates reference has the consultant invocation.
+| Shape | Model | Effort | Sandbox | Use |
+|---|---|---|---|---|
+| Worker | `gpt-6-sol` | `high` | `workspace-write` | the default; runs alone or fans out to at most five leaves |
+| Consultant | `gpt-6-sol` | `high` | `read-only` | architecture answers, review of a Claude worker's diff |
+| Arbiter | `gpt-6-sol` | `xhigh` | `read-only` | bake-off judging, final arbitration between a critic and an author |
+| Scout | `gpt-6-luna` | `max` | `read-only`, `-c web_search=live` for research | surveys, current APIs, advisories |
+| Deep consult | `gpt-6-astra` | `max` | `read-only` | explicit user request only; one very hard question |
 
-On plan credits Astra costs 2.5x Sol, 5x Terra, and about 50x Luna per token,
-and its fast tier multiplies that again. Astra finishes coding tasks in far
-fewer tokens, so per-task cost lands near Sol's and the 5.6 line earns its
-place only at Luna's price: the `grunt` role exists to conserve Astra usage on
-work that needs no judgment. Above 272K input tokens the API adds a
-long-context premium. The CLI compacts near that point unless
-`auto_compact_token_limit` is raised toward Astra's 1M window, so raise it only
-for a task that needs the whole window.
+Raise a Sol worker to `xhigh` for a task that already failed at `high` or for
+thorny debugging, and record the change in the fleet table. A cheap model on
+genuinely hard work produces rework, so give Luna only mechanical work.
+
+Above 272K input tokens the API adds a long-context premium. The CLI compacts
+near that point unless `auto_compact_token_limit` is raised, so raise it only
+for a task that needs a larger window.
 
 Precedence is the user's live request, then a task-specific policy, then
 configured defaults, bounded by what the active CLI and account support. A live
@@ -172,7 +162,7 @@ Avoid hard-coded model names in briefs unless they come from `preferences.md` or
 the user just specified them. When the user specifies a model or effort policy,
 write it into the brief and the fleet table.
 
-## Lead And Leaf Roles
+## Sol Worker And Leaves
 
 Subagents inherit the parent's model, reasoning effort, and sandbox policy
 unless a role sets them. A role is a standalone TOML file under `.codex/agents/`
@@ -184,39 +174,37 @@ unless a role sets them. A role is a standalone TOML file under `.codex/agents/`
 - <https://learn.chatgpt.com/docs/config-file/config-reference>
 - <https://learn.chatgpt.com/docs/agent-configuration/subagents>
 
-Roles are a convenience for a worker that fans out. Bootstrap copies three of
-them from the skill's `assets/codex-agents/`, and a campaign can edit them, add
-roles, or ignore them. Roles are named for the job so the model behind each
-can change with the next generation. Each follows the same shape:
+Bootstrap copies three roles from the skill's `assets/codex-agents/`, and
+a campaign can edit them, add roles, or ignore them. Roles are named for the
+job, so the next model generation changes one line per file:
 
 ```toml
-# .codex/agents/feature.toml
-name = "feature"
-description = "Judgment leaf: features, bug fixes, and tests that need design care."
+# .codex/agents/grunt.toml
+name = "grunt"
+description = "Mechanical leaf: refactors, fixtures, search, small tests, and routine edits."
 developer_instructions = "Own only the files named in your task. Run the verification command before reporting. Do not spawn agents."
-model = "gpt-6-astra"
-model_reasoning_effort = "medium"
+model = "gpt-6-luna"
+model_reasoning_effort = "max"
 ```
 
 | Role | Model | Effort | Sandbox | Leaf work |
 |---|---|---|---|---|
-| `feature` | `gpt-6-astra` | `medium` | inherited | Features, bug fixes, and tests that need judgment. Medium is Astra's default tier. |
-| `critic` | `gpt-6-astra` | `high` | `read-only`, set in the file | Second opinion on a sibling leaf's diff from a fresh session. The role file enforces read-only, so the critic cannot patch what it reviews. |
-| `grunt` | `gpt-5.6-luna` | `xhigh` | inherited | Mechanical refactors, fixtures, search, small tests. Raise to `max` when a mechanical task fails verification; `luna` stops there. |
+| `feature` | `gpt-6-sol` | `high` | inherited | A bounded sub-feature, bug fix, or test suite that needs design care. |
+| `critic` | `gpt-6-sol` | `medium` | `read-only`, set in the file | Second opinion on a sibling leaf's diff from a fresh session; it cannot patch what it reviews. |
+| `grunt` | `gpt-6-luna` | `max` | inherited | Mechanical refactors, fixtures, search, small tests. Move a task that fails verification twice to `feature`. |
 
-The role file carries the model and effort, so a lead brief can name roles
-instead of models: "spawn a `feature` agent for the parser rewrite, a `grunt`
-agent for the fixture updates, then a `critic` on the parser diff". Leave the
-decomposition to the lead when the split is not obvious from outside.
+A Sol brief can name roles instead of models: "spawn a `feature` leaf for the
+parser rewrite, a `grunt` leaf for the fixture updates, then a `critic` on the
+parser diff". Leave the decomposition to the Sol worker when the split is not
+obvious from outside.
 
-Take the model and effort from `preferences.md` or the user's request; omit both
-flags to use the CLI's configured default.
+Cap the team at five concurrent leaves:
 
 ```bash
 codex exec --json -s workspace-write \
   -c approval_policy=never \
-  -m gpt-6-astra -c model_reasoning_effort=medium \
-  -c agents.max_concurrent_threads_per_session=<cap> \
+  -m gpt-6-sol -c model_reasoning_effort=high \
+  -c agents.max_concurrent_threads_per_session=5 \
   -c 'sandbox_workspace_write.writable_roots=["<worktree>/.git"]' \
   --output-schema docs/campaign-hq/schemas/worker-result.json \
   -C <worktree> \
@@ -227,17 +215,18 @@ codex exec --json -s workspace-write \
 `agents.max_concurrent_threads_per_session` caps open subagent threads.
 `agents.default_subagent_model` and `agents.default_subagent_reasoning_effort`
 set fallbacks; an explicit spawn choice or a role file wins over both. Leaves
-inherit the lead's sandbox policy unless their role sets `sandbox_mode`, so a
-`workspace-write` lead gives its leaves write access to the same workspace.
+inherit the Sol worker's sandbox policy unless their role sets `sandbox_mode`,
+so a `workspace-write` worker gives its leaves write access to the same
+workspace. The brief must assign each leaf disjoint files.
 
-The `--json` stream shows only the lead's wait calls. Each leaf writes its own
+The `--json` stream shows only the worker's wait calls. Each leaf writes its own
 rollout file under `~/.codex/sessions/`, whose `turn_context` records carry the
 model and effort it ran with. Read those to confirm a leaf's role took effect;
-a lead's self-report about its own effort is not reliable.
+a worker's self-report about its leaves is not reliable.
 
-No config key limits nesting depth. The two-level depth cap is a brief-level
-rule, and every lead brief must forbid its leaves from spawning further agents.
-Keep leaves off `ultra` for the same reason: that tier delegates on its own.
+No config key limits nesting depth. Every Sol brief must forbid its leaves
+from spawning further agents, and leaves stay off `ultra` because that tier
+delegates on its own.
 
 ## Capabilities
 
@@ -247,9 +236,9 @@ Keep leaves off `ultra` for the same reason: that tier delegates on its own.
 | Live web search | `-c web_search=live` (default is `cached`, an index with no live fetch; `codex exec` has no `--search` flag) | volatile facts, current APIs, advisories, versions |
 | Image input | `-i current.png -i target.png` | UI bug reproduction from screenshots and mocks |
 | Image generation | prompt the built-in `image_gen` tool | asset generation; the tool saves under `~/.codex/generated_images/<session>/`, so the brief must require copying the file into the repo and verifying it exists |
-| Review mode | `codex exec review --base <ref> -m gpt-6-astra -c model_reasoning_effort=high` | read-only review gate in the consultant shape |
+| Review mode | `codex exec review --base <ref> -m gpt-6-sol -c model_reasoning_effort=high` | read-only review gate in the consultant shape |
 | Session continuation | `codex exec resume <session-id> "<correction>"` | incremental steering after a finished run |
-| Native subagents | prompt the built-in multi-agent tools (`spawn_agent`, `wait_agent`, `send_input`, `close_agent`); role files in `.codex/agents/` set each leaf's model and effort; leaves without a role inherit the lead's | a codex worker fans out its own parallel subagents inside one workspace; see Lead And Leaf Roles above and the squads reference |
+| Native subagents | prompt the built-in multi-agent tools (`spawn_agent`, `wait_agent`, `send_input`, `close_agent`); role files in `.codex/agents/` set each leaf's model and effort; leaves without a role inherit the worker's | a Sol worker fans out up to five leaves inside one workspace; see Sol Worker And Leaves above |
 
 ## Steering And Retry
 

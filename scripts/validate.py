@@ -5,8 +5,15 @@ import re
 import sys
 from pathlib import Path
 
+try:
+    import tomllib
+except ModuleNotFoundError:
+    tomllib = None
+
 ROOT = Path(__file__).resolve().parent.parent
 MAX_BODY_LINES = 500
+ROLE_KEYS = ("name", "description", "developer_instructions", "model", "model_reasoning_effort")
+EFFORTS = {"low", "medium", "high", "xhigh", "max", "ultra"}
 errors = []
 
 
@@ -120,6 +127,27 @@ for d in skill_dirs:
     for ref in re.findall(r"\]\((?!https?://|#|mailto:)([^)\s]+?)(?:#[^)]*)?\)", body):
         if not (d / ref).exists():
             err(md, f"broken relative link: {ref}")
+
+    # Codex role files: bootstrap copies these into .codex/agents/, and a
+    # missing key silently falls back to the parent worker's model.
+    role_files = sorted((d / "assets" / "codex-agents").glob("*.toml"))
+    if role_files and tomllib is None:
+        err(d, "Python 3.11+ required to validate Codex role files")
+        role_files = []
+    for role in role_files:
+        try:
+            data = tomllib.loads(role.read_text())
+        except tomllib.TOMLDecodeError as e:
+            err(role, f"invalid TOML: {e}")
+            continue
+        for key in ROLE_KEYS:
+            if not data.get(key):
+                err(role, f"missing required key: {key}")
+        if data.get("name") and data["name"] != role.stem:
+            err(role, f"name {data['name']!r} does not match file name {role.stem!r}")
+        effort = data.get("model_reasoning_effort")
+        if effort and effort not in EFFORTS:
+            err(role, f"unknown model_reasoning_effort {effort!r}")
 
 if errors:
     print("\n".join(errors))
