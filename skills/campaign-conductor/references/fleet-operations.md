@@ -54,9 +54,12 @@ Structure large campaigns as waves:
 6. Update campaign files.
 7. Start the next wave from the integrated result.
 
-Cap concurrent writer waves at what the conductor can verify when they land.
-Four to six writer branches is a sane default. Read-only scouts and reviewers
-can fan out wider because they do not create merge debt.
+Size a writer wave by how its branches will be verified and integrated, not
+by a fixed count. Branches the conductor reviews itself keep a wave to what it
+can read. Branches routed through integration and verifier workers let a wave
+run as wide as disjoint file ownership and the account's rate limits allow.
+Read-only scouts and reviewers fan out wider still because they create no merge
+debt.
 
 Do not stack new writer work on unintegrated branches unless the dependency is
 explicit. That compounds conflicts and makes verification ambiguous.
@@ -73,6 +76,8 @@ The integration brief must include:
 - Conflict-resolution policy
 - Files or subsystems each branch owns
 - Full verification command
+- Instruction to read each branch's diff against its brief and report defects
+  with file and line
 - Rule that the integration branch stops before merging to main
 
 Route integration by judgment required: Fable 5.1 or Opus 5.5 for design or

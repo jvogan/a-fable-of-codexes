@@ -1,0 +1,2 @@
+# Worker event streams: large, and only the first line (session id) matters.
+out/*.events.jsonl

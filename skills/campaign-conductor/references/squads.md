@@ -18,11 +18,11 @@ Without intermediate integration, a squad only adds reporting overhead.
 
 ## Shape
 
-A squad is one Claude Opus 5.5 lead at high effort that:
+A squad is one Claude Opus 5.5 lead at high or xhigh effort that:
 
 1. Receives a sub-goal and namespace from the conductor.
 2. Dispatches Sol workers with `codex exec`, one worktree each. Each Sol worker
-   may fan out to at most five leaves inside its own worktree.
+   may fan out a leaf team inside its own worktree.
 3. Integrates the Sol branches into one squad integration branch.
 4. Runs the squad verification command.
 5. Reports one structured result to the conductor.
@@ -31,8 +31,8 @@ The conductor merges the squad integration branch later. The squad never merges
 to main.
 
 Any worker that can dispatch, integrate, and verify can lead. Opus 5.5 is the
-default because squad leads make integration and design calls; drop the lead
-to medium effort for a mechanical sub-goal.
+default because squad leads make integration and design calls; a Sonnet 5.5
+lead suits a mechanical sub-goal.
 
 ## Hard Rules
 
@@ -43,8 +43,8 @@ to medium effort for a mechanical sub-goal.
   spawning; Codex workers carry the native spawn tools (nested `codex exec`
   processes are sandbox-blocked; the native tools are not), so the rule has to
   be stated.
-- Every lead brief caps concurrent Sol workers, and every Sol brief caps
-  concurrent leaves at five.
+- Every lead brief states how many Sol workers run at once, and every Sol
+  brief assigns each leaf a disjoint file group.
 - Branches and worktrees stay inside the squad namespace.
 - The squad lead verifies the integrated branch before reporting.
 - The conductor reruns verification when merging the squad branch.
@@ -72,7 +72,7 @@ Include:
 - Base commit
 - Namespace prefix
 - Decomposition, or explicit authority to decompose
-- Sol worker cap, and the five-leaf cap each Sol brief must carry
+- Sol worker count, and the leaf file split each Sol brief must carry
 - Sol brief requirements (the Codex dispatch brief contract)
 - Verification command
 - Stop-at-integration-branch rule

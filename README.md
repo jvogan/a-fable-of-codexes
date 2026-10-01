@@ -11,12 +11,15 @@
 
 A Claude Code skill that makes Claude the conductor of a fleet of OpenAI Codex
 workers. Claude Fable 5.1 plans the work, dispatches parallel Codex workers on
-GPT-6 Sol to implement it, and verifies every branch before it merges. Each Sol
-worker can run its own team of up to five Sol and Luna agents, and Claude Opus 5.5
-agents handle design and lead squads of Sol workers.
+GPT-6.1 Sol to implement it, and verifies every branch before it merges. Each
+Sol worker can run its own team of Sol and Luna agents, sized to the task, and
+wide GPT-6 Luna sweeps take bulk read-only work. Claude Opus 5.5 agents handle
+design and lead squads of Sol workers, and Claude Sonnet 5.5 agents survey the
+codebase.
 
 The conductor's context stays free for planning and judgment because workers
-spend their own context on implementation. Git worktrees let many writers work
+spend their own context on implementation and routine verification, and the
+conductor reads their reports rather than their transcripts. Git worktrees let many writers work
 in parallel without collisions, and campaign state lives in the repo, so a
 later session resumes mid-campaign without setup.
 
@@ -24,23 +27,24 @@ later session resumes mid-campaign without setup.
 
 | Role | Model and effort | Job |
 |---|---|---|
-| Conductor | Claude Fable 5.1, high (Opus 5.5 when Fable is unavailable) | Plans, dispatches, integrates, and verifies. Writes no feature code. |
-| Worker | Codex `gpt-6-sol`, `high` | Implements a task in its own worktree, alone or with a team of up to five leaves. |
-| Leaf | `feature`: Sol `high`; `critic`: Sol `medium`, read-only; `grunt`: `gpt-6-luna` `max` | Takes one slice of a Sol worker's task: judgment work, review of a sibling's diff, or mechanical work. |
-| Design agent and squad lead | Claude Opus 5.5, high | UI/UX and design review; leads a squad of Sol workers toward one integration branch. |
-| Consultant and arbiter | Codex `gpt-6-sol`, `high` or `xhigh`, read-only | Reviews Claude diffs, answers architecture questions, judges bake-offs. |
+| Conductor | Claude Fable 5.1, high (or Opus 5.5, high) | Plans, dispatches, integrates, and verifies. Writes no feature code. |
+| Worker | Codex `gpt-6.1-sol`, `high` | Implements a task in its own worktree, alone or with a leaf team sized to the task. |
+| Leaf | `feature`: Sol `high`; `critic`: Sol `high`, read-only; `grunt`: `gpt-6-luna` `xhigh` | Takes one slice of a Sol worker's task: judgment work, review of a sibling's diff, or mechanical work. |
+| Design agent and squad lead | Claude Opus 5.5, high or xhigh | UI/UX and design review; leads a squad of Sol workers toward one integration branch. |
+| Consultant and arbiter | Codex `gpt-6.1-sol`, `high` or `xhigh`, read-only | Reviews Claude diffs, answers architecture questions, judges bake-offs. |
 | Deep consult | Codex `gpt-6-astra`, `max`, read-only | Runs only when you ask for an exceptional effort on a rare, very hard question. |
-| Scout | Claude Opus 5.5 at medium, or Codex `gpt-6-luna` `max`, read-only | Surveys the codebase and researches current APIs. |
+| Scout | Claude Sonnet 5.5, high or xhigh, or Codex `gpt-6-luna`: `max` for one deep scout, `xhigh` for many in parallel; read-only | Surveys the codebase, sweeps it package by package, and researches current APIs. |
 | Other-family reviewers (optional) | `agy` Gemini 3.8 Flash high, `grok` Grok 4.7 xhigh, `muse` Muse Spark 1.3 Contributor max | Read-only second opinions from another model family. |
 
-Without Codex, Opus 5.5 workers at medium take the implementation role and every other
-part of the campaign stays the same.
+Without Codex, Sonnet 5.5 workers take the implementation role, Opus 5.5 takes
+tasks that need design judgment, and every other part of the campaign stays the
+same.
 
 ```mermaid
 flowchart TD
-    C[Fable 5.1 conductor] -->|task briefs| W["Sol workers ×N<br>each runs ≤5 leaves<br>in its own worktree"]
+    C[Fable 5.1 conductor] -->|task briefs| W["Sol workers ×N<br>with leaf teams,<br>one worktree each"]
     C -->|sub-goal briefs| L[Opus 5.5 squad lead]
-    L --> LS["Sol workers ×N<br>each runs ≤5 leaves<br>in its own worktree"]
+    L --> LS["Sol workers ×N<br>with leaf teams,<br>one worktree each"]
     LS --> I[campaign/&lt;squad&gt;<br>integration branch]
     W --> V[Conductor merges,<br>re-verifies]
     I --> V
@@ -93,7 +97,7 @@ docs/campaign-hq/
 ├── LEARNINGS.md     standing rules + dispatch log
 ├── preferences.md   worker routing, permission envelope
 ├── briefs/          one file per dispatch
-├── out/             collected worker reports
+├── out/             collected worker reports (event streams gitignored)
 └── schemas/         worker-result.json
 ```
 
@@ -129,21 +133,23 @@ Direct it in plain language:
 ## Requirements
 
 - **Claude Code**, with Fable 5.1 or Opus 5.5 as the session model. The skill
-  uses the Agent and Workflow tools.
+  uses the Agent and Workflow tools and runs Claude subagents on Opus 5.5 and
+  Sonnet 5.5.
 - **OpenAI Codex CLI** ([github.com/openai/codex](https://github.com/openai/codex)).
   Install with `npm install -g @openai/codex` or `brew install codex`, then run
   `codex login`. ChatGPT-plan auth draws on plan usage, and limits vary by
-  plan; API-key auth is billed per token. Size waves to your limits. Set the
-  worker default in `~/.codex/config.toml`:
+  plan; API-key auth is billed per token. Size waves to your limits. The skill
+  passes model and effort on every dispatch; to match it outside campaigns, set
+  the default in `~/.codex/config.toml`:
 
   ```toml
-  model = "gpt-6-sol"
+  model = "gpt-6.1-sol"
   model_reasoning_effort = "high"
   ```
 
-  Effort runs `low`, `medium`, `high`, `xhigh`, `max`, `ultra`. Luna stops at
-  `max`. `ultra` delegates to subagents on its own, so the skill uses it only
-  when you ask.
+  Effort runs `low`, `medium`, `high`, `xhigh`, `max`, `ultra`, and the skill
+  routes nothing below `high`. Luna stops at `max`. `ultra` delegates to
+  subagents on its own, so the skill uses it only when you ask.
 - **Other agent CLIs** (optional). Each adds a model family for read-only
   second opinions and signs in with OAuth: the Antigravity CLI `agy`
   ([antigravity.google](https://antigravity.google)) on
@@ -165,7 +171,7 @@ Direct it in plain language:
 Model names live in four places. When a new generation ships, update them
 together:
 
-1. `skills/campaign-conductor/SKILL.md`: the routing table.
+1. `skills/campaign-conductor/SKILL.md`: the frontmatter and the routing table.
 2. `skills/campaign-conductor/references/`: the shape tables and command
    examples.
 3. `skills/campaign-conductor/assets/`: the role files and `preferences.md`.
