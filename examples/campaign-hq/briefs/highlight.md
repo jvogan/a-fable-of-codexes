@@ -3,6 +3,12 @@
 Goal: highlight matched terms in search results and deep-link each result to
 its heading anchor.
 
+Done when: every result links to an anchor that exists on its page, and
+highlighting changes nothing in a result except the highlight markup.
+
+Input: the heading-anchor audit found 31 headings without stable anchors.
+`anchors.ts` must derive a stable anchor for each.
+
 Branch: `campaign/highlight`, worktree `../wt-highlight`, base commit `3f2a91c`.
 
 Files you own: `src/search/highlight.ts`, `src/search/anchors.ts`, and their
@@ -13,9 +19,10 @@ Conventions: named exports only; tests colocated as `*.test.ts`; no new
 dependencies.
 
 Verify: `npm test -- highlight` from the worktree root. All tests must pass
-before you commit.
+before you report.
 
-Commit your work on this branch with message `campaign/highlight: <summary>`.
+Leave your changes uncommitted and list every changed path in the report. The
+conductor commits them as `campaign/highlight: <summary>`.
 
 Do not spawn subagents; this task is sized for one worker.
 

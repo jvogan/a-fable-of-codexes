@@ -3,11 +3,12 @@
 Read this when more than one writer is active, when work may overlap, or when a
 wave must be integrated.
 
-## Invariant
+## Writers Per Tree
 
-One writer per tree. Shared-tree writes are acceptable only for 2-3 workers with
-naturally disjoint file boundaries. Anything larger or overlapping gets one git
-worktree and branch per worker.
+Default to one writer per tree. A Sol worker and its leaves count as one
+writer. Shared-tree writes are acceptable only for 2-3 workers with naturally
+disjoint file boundaries. Anything larger or overlapping gets one git worktree
+and branch per worker.
 
 ## Worktree Pattern
 
@@ -23,13 +24,15 @@ Each writer brief must state:
 
 - Base commit
 - Branch name
-- Worktree path
+- Worktree path (omit it for a Claude worker on `isolation: 'worktree'`)
 - Owned files
 - Excluded files
 - Verification command
-- Required commit message: `campaign/<task>: <summary>`
+- Commit message: `campaign/<task>: <summary>`
 
-Uncommitted worker output is not ready for integration.
+Uncommitted output is not ready for integration. A Claude worker commits its
+own work; the collector commits a Codex worker's (Collection in Codex
+dispatch).
 
 ## Fleet Table
 
@@ -38,9 +41,9 @@ Record every active dispatch in `CAMPAIGN.md`:
 | Task | Worker | Branch | Worktree | Session | Dispatched | Status |
 |---|---|---|---|---|---|---|
 
-Status should include expected duration for running workers. A worker whose
-output file is empty past roughly 3x expected duration is stalled: stop it,
-inspect its worktree, then resume or redispatch.
+Status must include the expected duration for a running worker. A worker with
+no report past roughly 3x its expected duration is stalled: stop it, inspect
+its worktree, then resume or redispatch.
 
 ## Waves
 
@@ -55,9 +58,10 @@ Structure large campaigns as waves:
 7. Start the next wave from the integrated result.
 
 Size a writer wave by how its branches will be verified and integrated, not
-by a fixed count. Branches the conductor reviews itself keep a wave to what it
-can read. Branches routed through integration and verifier workers let a wave
-run as wide as disjoint file ownership and the account's rate limits allow.
+by a fixed count. A wave whose branches the conductor reviews itself is limited
+to what the conductor can read. A wave routed through integration and verifier
+workers runs as wide as disjoint file ownership and the account's rate limits
+allow.
 Read-only scouts and reviewers fan out wider still because they create no merge
 debt.
 
@@ -78,10 +82,12 @@ The integration brief must include:
 - Full verification command
 - Instruction to read each branch's diff against its brief and report defects
   with file and line
-- Rule that the integration branch stops before merging to main
+- Rule that the integration worker stops before merging to main
 
-Route integration by judgment required: Fable 5.1 or Opus 5.5 for design or
-product tradeoffs, a Sol worker for mechanical large-scale reconciliation.
+Route integration by judgment required: Fable 5.2 or Opus 5.5 for design or
+product tradeoffs, Sonnet 5.5 for mechanical large-scale reconciliation. A
+Codex worker cannot integrate, because `git merge` writes git metadata that
+its sandbox keeps read-only.
 
 ## Cleanup
 

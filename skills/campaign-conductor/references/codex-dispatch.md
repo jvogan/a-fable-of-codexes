@@ -43,21 +43,23 @@ Every Codex brief must include:
 - Files/directories excluded because siblings own them
 - Repo conventions to preserve
 - Verification command to run from the worktree root
-- Required commit message
+- Instruction to leave changes uncommitted and report every changed path
 - Required final report schema
-- Fan-out policy: run alone, or spawn named leaves, one per disjoint file group, that must not spawn further agents
+- Fan-out policy: run alone, or spawn named leaves that must not spawn further
+  agents, one leaf per disjoint file group
 
-Codex workers are fire-and-collect. The initial brief must be complete enough to
-run without follow-up questions.
+Codex workers take no input mid-run, so the initial brief must be complete
+enough to run without follow-up questions.
 
 ## Standard Dispatch
 
 Use `read-only` for scouts, reviewers, and consultations. Use `workspace-write`
-for writers.
-Keep network on only when the task needs dependency installation, package docs,
-or live research. `workspace-write` keeps `.git` read-only, so a brief that
-requires a commit needs the worktree's `.git` in `writable_roots`; without it
-the worker cannot create `.git/index.lock`.
+for writers. Keep network on only when the task needs dependency installation,
+package docs, or live research. `workspace-write` keeps git metadata read-only,
+and in a linked worktree `writable_roots` does not lift that (checked on
+codex-cli 0.169.0), so a Codex worker cannot run `git add` or `git commit`.
+The brief tells the worker to leave its changes uncommitted, and the collector
+commits them (see Collection).
 
 `approval_policy=never` keeps the envelope fixed: anything the sandbox blocks
 fails instead of asking. If a host blocks `never` for unattended runs,
@@ -67,8 +69,8 @@ the envelope mid-run.
 
 Run every dispatch as a background command and read the `-o` report when it
 exits. The events file holds the `--json` stream: every command the worker ran
-and its output, which the conductor should not read. Its first line
-(`thread.started`) carries the session id.
+and its output. Read only its first line, the `thread.started` event, whose
+`thread_id` is the session id.
 
 One writer:
 
@@ -77,7 +79,6 @@ codex exec --json -s workspace-write \
   -m gpt-6.1-sol -c model_reasoning_effort=high \
   -c approval_policy=never \
   -c sandbox_workspace_write.network_access=true \
-  -c 'sandbox_workspace_write.writable_roots=["<worktree>/.git"]' \
   --output-schema docs/campaign-hq/schemas/worker-result.json \
   -C <worktree> \
   -o docs/campaign-hq/out/<task>.json \
@@ -92,6 +93,7 @@ codex exec --json -s read-only \
   -m gpt-6-luna -c model_reasoning_effort=max \
   -c approval_policy=never \
   -c web_search=live \
+  --output-schema docs/campaign-hq/schemas/scout-result.json \
   -C <repo> \
   -o docs/campaign-hq/out/<task>.json \
   - < docs/campaign-hq/briefs/<task>.md \
@@ -105,23 +107,12 @@ in the background at once, with `-c model_reasoning_effort=xhigh`.
 OpenAI-maintained index, no live fetch), so a scout needing the live web must
 set `web_search=live`. Values are `live`, `indexed`, `cached`, and `disabled`;
 set it per call with `-c web_search=<mode>` or as a top-level config key.
-`codex exec` has no `--search` flag; the interactive `codex` command still does.
+`codex exec` has no `--search` flag; the interactive `codex` command has one.
 Check `codex exec --help` for the version in use.
 
-Second Codex home, when the user has configured one:
-
-```bash
-CODEX_HOME="<second-codex-home>" codex exec --json -s workspace-write \
-  -m gpt-6.1-sol -c model_reasoning_effort=high \
-  -c approval_policy=never \
-  -c sandbox_workspace_write.network_access=true \
-  -c 'sandbox_workspace_write.writable_roots=["<worktree>/.git"]' \
-  --output-schema docs/campaign-hq/schemas/worker-result.json \
-  -C <worktree> \
-  -o docs/campaign-hq/out/<task>.json \
-  - < docs/campaign-hq/briefs/<task>.md \
-  > docs/campaign-hq/out/<task>.events.jsonl
-```
+To dispatch through a second Codex home that the user has configured, prefix
+the command with `CODEX_HOME="<second-codex-home>"` and note the home in the
+fleet table.
 
 Omit `--skip-git-repo-check` for normal campaign worktrees. A bad `-C` should
 fail quickly instead of running outside the intended repo.
@@ -134,8 +125,7 @@ optional `fast` service tier, which runs about twice as fast for more usage.
 The fleet uses three Codex models:
 
 - `gpt-6.1-sol`: the campaign worker and the judgment leaves, at `high` in this
-  skill. It replaces `gpt-6-sol`, the previous Sol generation. With no effort
-  flag or config value it runs at `low`.
+  skill. With no effort flag or config value it runs at `low`.
 - `gpt-6-luna`: the mechanical leaf and bulk scout model. It runs at `xhigh`
   wherever many run at once (the `grunt` role, parallel sweeps) and at `max`
   for a single deep scout. Efforts stop at `max`.
@@ -160,21 +150,21 @@ Every shape the conductor or an Opus squad lead calls directly:
 
 No shape or role runs below `high`. Raise a Sol worker to `xhigh` for a task
 that already failed at `high` or for thorny debugging, and record the change in
-the fleet table. A cheap model on genuinely hard work produces rework, so give
-Luna mechanical work and read-only sweeps.
+the fleet table. A cheap model on hard work produces rework, so give Luna
+mechanical work and read-only sweeps.
 
 Above 272K input tokens the API adds a long-context premium. The CLI compacts
 near that point unless `auto_compact_token_limit` is raised, so raise it only
 for a task that needs a larger window.
 
-Precedence is the user's live request, then a task-specific policy, then
-configured defaults, bounded by what the active CLI and account support. A live
-request for a specific model or effort wins; do not silently "upgrade" or
-"downgrade" it. Pass `-m <model> -c model_reasoning_effort=<level>` on every
-dispatch, as the dispatch commands in this file do: the user's config default
-may name another model or effort. Do not rewrite the user's global config
-unless asked. If a requested model or effort value is unavailable, stop and
-record the limitation instead of pretending the requested policy was used.
+Precedence is the user's live request, then `preferences.md`, then the skill
+defaults, bounded by what the active CLI and account support. A live request
+for a specific model or effort wins; do not silently "upgrade" or "downgrade"
+it. Pass `-m <model> -c model_reasoning_effort=<level>` on every dispatch, as
+the dispatch commands in this file do: the user's config default may name
+another model or effort. Do not rewrite the user's global config unless asked.
+If a requested model or effort is unavailable, say so before dispatching, as
+Worker Routing in SKILL.md directs, and record the limitation.
 
 Avoid hard-coded model names in briefs unless they come from `preferences.md` or
 the user just specified them. When the user specifies a model or effort policy,
@@ -194,7 +184,7 @@ unless a role sets them. A role is a standalone TOML file under `.codex/agents/`
 
 Bootstrap copies three roles from the skill's `assets/codex-agents/`, and
 a campaign can edit them, add roles, or ignore them. Roles are named for the
-job, so the next model generation changes one line per file:
+job, so the next model generation needs a one-line edit per file:
 
 ```toml
 # .codex/agents/grunt.toml
@@ -224,7 +214,6 @@ codex exec --json -s workspace-write \
   -c approval_policy=never \
   -m gpt-6.1-sol -c model_reasoning_effort=high \
   -c agents.max_concurrent_threads_per_session=<team-size> \
-  -c 'sandbox_workspace_write.writable_roots=["<worktree>/.git"]' \
   --output-schema docs/campaign-hq/schemas/worker-result.json \
   -C <worktree> \
   -o docs/campaign-hq/out/<task>.json \
@@ -234,27 +223,26 @@ codex exec --json -s workspace-write \
 
 `agents.max_concurrent_threads_per_session` sets how many subagent threads run
 at once. Size the team to the task: one leaf per disjoint file group, bounded
-by the account's rate limits, not by a fixed count.
-`agents.default_subagent_model` and `agents.default_subagent_reasoning_effort`
-set fallbacks; an explicit spawn choice or a role file wins over both. Leaves
-inherit the Sol worker's sandbox policy unless their role sets `sandbox_mode`,
-so a `workspace-write` worker gives its leaves write access to the same
-workspace. The brief must assign each leaf disjoint files.
+only by the account's rate limits. An explicit spawn choice
+or a role file wins over the fallbacks that `agents.default_subagent_model`
+and `agents.default_subagent_reasoning_effort` set. Leaves inherit the Sol
+worker's sandbox policy unless their role sets `sandbox_mode`, so a
+`workspace-write` worker gives its leaves write access to the same workspace.
+The brief must assign each leaf disjoint files.
 
-The `--json` stream shows only the worker's wait calls. Each leaf writes its own
-rollout file under `~/.codex/sessions/`, whose `turn_context` records carry the
-model and effort it ran with. Read those to confirm a leaf's role took effect;
-a worker's self-report about its leaves is not reliable.
+The `--json` stream shows only the worker's wait calls. Each leaf writes its
+own rollout file under `~/.codex/sessions/`; the file's `turn_context` records
+carry the model and effort the leaf ran with. Read those records to confirm a
+leaf's role took effect; a worker's self-report about its leaves is unreliable.
 
 `agents.max_depth` applies only to multi-agent V1, and V2 ignores it, so every
-Sol brief must forbid its leaves from spawning further agents, and leaves stay off `ultra` because that tier
-delegates on its own.
+Sol brief must forbid its leaves from spawning further agents.
 
 ## Capabilities
 
 | Capability | Invocation | Campaign use |
 |---|---|---|
-| Structured final report | `--output-schema docs/campaign-hq/schemas/worker-result.json` | machine-checkable collection |
+| Structured final report | `--output-schema docs/campaign-hq/schemas/worker-result.json` for writers, `scout-result.json` for scouts | machine-checkable collection |
 | Live web search | `-c web_search=live` (default is `cached`, an index with no live fetch; `codex exec` has no `--search` flag) | volatile facts, current APIs, advisories, versions |
 | Image input | `-i current.png -i target.png` | UI bug reproduction from screenshots and mocks |
 | Image generation | prompt the built-in `image_gen` tool | asset generation; the tool saves under `~/.codex/generated_images/<session>/`, so the brief must require copying the file into the repo and verifying it exists |
@@ -264,8 +252,8 @@ delegates on its own.
 
 ## Steering And Retry
 
-Record each worker's session id in the fleet table: it is the `thread_id` on
-the first line of its events file. Resume when the result is mostly right and needs a correction:
+Record each worker's session id in the fleet table. Resume when the result is
+mostly right and needs a correction:
 
 ```bash
 codex exec resume <session-id> "<correction>"
@@ -277,7 +265,16 @@ valuable than a clean retry.
 
 ## Collection
 
-Treat the worker's report as a claim. An agent that did not write the commit
-inspects it and reruns the verification command: the conductor for high-risk
-work, an integration or verifier worker otherwise. Record the result in
-`CAMPAIGN.md` and `LEARNINGS.md`.
+Commit the worker's changes first, staging only the paths in its report:
+
+```bash
+git -C <worktree> add -- <files_changed>
+git -C <worktree> commit -m "campaign/<task>: <summary>"
+git -C <worktree> status --short
+```
+
+A path the last command still lists is output the worker did not report:
+inspect it before review. Then treat the report as a claim. An agent that did
+not write the change inspects the commit and reruns the verification command:
+the conductor for high-risk work, an integration or verifier worker otherwise.
+Record the result in `CAMPAIGN.md` and `LEARNINGS.md`.

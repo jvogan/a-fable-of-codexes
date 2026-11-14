@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Validate skills against the Agent Skills spec (agentskills.io/specification)
 plus this repo's own limits. Standard library only."""
+import json
 import re
 import sys
 from pathlib import Path
@@ -87,11 +88,57 @@ def parse_frontmatter(path, text):
     return data, body
 
 
+def check_role_files(d):
+    """Codex role files: bootstrap copies these into .codex/agents/, and a
+    missing key silently falls back to the parent worker's model."""
+    role_files = sorted((d / "assets" / "codex-agents").glob("*.toml"))
+    if role_files and tomllib is None:
+        err(d, "Python 3.11+ required to validate Codex role files")
+        role_files = []
+    for role in role_files:
+        try:
+            data = tomllib.loads(role.read_text())
+        except tomllib.TOMLDecodeError as e:
+            err(role, f"invalid TOML: {e}")
+            continue
+        for key in ROLE_KEYS:
+            if not data.get(key):
+                err(role, f"missing required key: {key}")
+        if data.get("name") and data["name"] != role.stem:
+            err(role, f"name {data['name']!r} does not match file name {role.stem!r}")
+        effort = data.get("model_reasoning_effort")
+        if effort and effort not in EFFORTS:
+            err(role, f"unknown model_reasoning_effort {effort!r}")
+
+
+def check_schemas(d):
+    """Report schemas: Codex sends --output-schema in strict mode and rejects
+    the request when any object leaves additionalProperties unset."""
+    for schema in sorted((d / "assets").glob("**/schemas/*.json")):
+        try:
+            data = json.loads(schema.read_text())
+        except json.JSONDecodeError as e:
+            err(schema, f"invalid JSON: {e}")
+            continue
+        stack = [("$", data)]
+        while stack:
+            where, node = stack.pop()
+            if isinstance(node, dict):
+                if node.get("type") == "object" and node.get("additionalProperties") is not False:
+                    err(schema, f"{where}: object must set additionalProperties to false")
+                stack.extend((f"{where}.{k}", v) for k, v in node.items())
+            elif isinstance(node, list):
+                stack.extend((f"{where}[{i}]", v) for i, v in enumerate(node))
+
+
 skill_dirs = sorted(p for p in (ROOT / "skills").iterdir() if p.is_dir())
 if not skill_dirs:
     err("skills/", "no skill directories found")
 
 for d in skill_dirs:
+    # Asset checks run first so a frontmatter error does not hide them.
+    check_role_files(d)
+    check_schemas(d)
     md = d / "SKILL.md"
     if not md.exists():
         err(d, "missing SKILL.md")
@@ -120,34 +167,13 @@ for d in skill_dirs:
     if compat and len(compat) > 500:
         err(md, f"compatibility is {len(compat)} chars; spec maximum is 500")
 
-    body_lines = body.count("\n") + 1
-    if body_lines > MAX_BODY_LINES:
+    body_lines = len(body.splitlines())
+    if body_lines >= MAX_BODY_LINES:
         err(md, f"body is {body_lines} lines; keep under {MAX_BODY_LINES}")
 
     for ref in re.findall(r"\]\((?!https?://|#|mailto:)([^)\s]+?)(?:#[^)]*)?\)", body):
         if not (d / ref).exists():
             err(md, f"broken relative link: {ref}")
-
-    # Codex role files: bootstrap copies these into .codex/agents/, and a
-    # missing key silently falls back to the parent worker's model.
-    role_files = sorted((d / "assets" / "codex-agents").glob("*.toml"))
-    if role_files and tomllib is None:
-        err(d, "Python 3.11+ required to validate Codex role files")
-        role_files = []
-    for role in role_files:
-        try:
-            data = tomllib.loads(role.read_text())
-        except tomllib.TOMLDecodeError as e:
-            err(role, f"invalid TOML: {e}")
-            continue
-        for key in ROLE_KEYS:
-            if not data.get(key):
-                err(role, f"missing required key: {key}")
-        if data.get("name") and data["name"] != role.stem:
-            err(role, f"name {data['name']!r} does not match file name {role.stem!r}")
-        effort = data.get("model_reasoning_effort")
-        if effort and effort not in EFFORTS:
-            err(role, f"unknown model_reasoning_effort {effort!r}")
 
 if errors:
     print("\n".join(errors))

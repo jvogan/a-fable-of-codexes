@@ -3,62 +3,34 @@
 Read this when collecting worker outputs, integrating a wave, handling risky
 diffs, or pausing a campaign.
 
-## Worker Report Schema
+## Report Schemas
 
-Every worker report must include:
+Bootstrap copies two schemas into `schemas/` in the campaign folder:
 
-- `status`
-- `branch`
-- `commit`
-- `files_changed`
-- `verify_cmd`
-- `verify_result` with `passed` and `output_tail`
-- `blockers`
+- `worker-result.json`, for writers and integration workers: `status`,
+  `branch`, `commit` (empty when the collector commits), `files_changed`,
+  `verify_cmd`, `verify_result` with `passed` and `output_tail`, and
+  `blockers`.
+- `scout-result.json`, for read-only scouts and sweeps: `status`, `summary`,
+  `findings` (each with `claim`, `file`, and `line`), and `blockers`.
 
-Codex workers should use:
+A Codex writer or scout dispatch must pass its schema:
 
 ```bash
 --output-schema docs/campaign-hq/schemas/worker-result.json
+--output-schema docs/campaign-hq/schemas/scout-result.json
 ```
 
-Claude workers should end with a fenced JSON block matching the same schema.
-
-## Schema Template
-
-```json
-{
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "worker-result",
-  "type": "object",
-  "required": ["status", "branch", "commit", "files_changed", "verify_cmd", "verify_result", "blockers"],
-  "properties": {
-    "status": { "enum": ["done", "partial", "blocked", "failed"] },
-    "branch": { "type": "string" },
-    "commit": { "type": "string", "description": "sha of the final commit; empty if none" },
-    "files_changed": { "type": "array", "items": { "type": "string" } },
-    "verify_cmd": { "type": "string" },
-    "verify_result": {
-      "type": "object",
-      "required": ["passed", "output_tail"],
-      "properties": {
-        "passed": { "type": "boolean" },
-        "output_tail": { "type": "string" }
-      }
-    },
-    "blockers": { "type": "array", "items": { "type": "string" } }
-  },
-  "additionalProperties": false
-}
-```
+A Claude worker must end with a fenced JSON block matching its schema.
 
 ## Cross-Model Review
 
-Author and reviewer must be separate. Model families that can review: Claude,
-Codex, and Gemini, Grok, or Muse through their OAuth-backed CLIs.
+Author and reviewer must be separate. The reviewing families are Claude and
+Codex, plus Gemini, Grok, and Muse through their OAuth-backed CLIs.
 
-- After a Codex worker lands a high-risk diff, dispatch a Claude Opus 5.5
+- After a Codex worker returns a high-risk diff, dispatch a Claude Opus 5.5
   reviewer or a review from one of the other CLIs.
-- After a Claude worker lands a high-risk diff, run a Codex consultation:
+- After a Claude worker returns a high-risk diff, run a Codex consultation:
   read-only on `gpt-6.1-sol` at `high`.
 - After each wave integration, review the merged result to catch semantic
   conflicts that appear only after individually valid branches combine.
@@ -66,29 +38,29 @@ Codex, and Gemini, Grok, or Muse through their OAuth-backed CLIs.
 High-risk means auth, permissions, billing, data migration, shared state,
 security boundaries, persistent storage, or broad refactors.
 
-Codex consultation, also the shape for architecture questions. Inside a Sol
-fan-out the same review runs as a `critic` leaf (Sol at `high`), read-only
-by role file:
+A Codex consultation is also the shape for architecture questions:
 
 ```bash
 codex exec -s read-only -m gpt-6.1-sol -c model_reasoning_effort=high \
   -C "$PWD" - < docs/campaign-hq/briefs/<task>.md
 ```
 
-`codex exec review --base <ref>` runs the built-in review flow and takes the
-same `-m` and `-c` flags. Keep the consultant off `ultra`: that tier delegates
-on its own, and a consultation is one model reading and advising.
+Inside a Sol fan-out, a `critic` leaf (Sol at `high`, read-only by role file)
+runs the same review. `codex exec review --base <ref>` runs the built-in review
+flow and takes the same `-m` and `-c` flags. Keep the consultant off `ultra`:
+that tier delegates on its own, and a consultation is one model reading and
+advising.
 
 When the user explicitly asks for an exceptional effort on a rare, very hard
-question, run the same command with `-m gpt-6-astra -c
-model_reasoning_effort=max`. Give it the question, the relevant files, and the
-conductor's current answer, and ask for an independent answer with its
-reasoning. The conductor weighs both; Astra's answer does not override
-verification.
+question, run the same command with
+`-m gpt-6-astra -c model_reasoning_effort=max`. Give Astra the question, the
+relevant files, and the conductor's current answer, and ask for an independent
+answer with its reasoning. The conductor weighs both; Astra's answer does not
+override verification.
 
-Read-only review from another model family, whichever CLI the user has.
-These reviewers are optional and roughly Luna-tier; use them for a different
-family's perspective, not as the primary review:
+For a read-only review from another model family, use whichever CLI the user
+has. These reviewers are optional and roughly Luna-tier; use them only as a
+secondary review from a different model family:
 
 ```bash
 agy --model gemini-3.8-flash-high --mode plan --sandbox \
@@ -104,21 +76,20 @@ muse exec --workspace "$PWD" --trust-workspace \
 ```
 
 For `agy`, attach `-p` to its value with `=` and omit `--effort` in plan mode,
-since the tier is part of the slug; a write-mode agent swaps `--mode plan
---sandbox` for `--effort high --mode accept-edits`. `muse` keeps its sandbox
-and approval prompts on by default, and its headless options go after `exec`.
-Close stdin with `< /dev/null` on headless `grok` and `muse` runs: from a
-backgrounded shell they can otherwise exit with no output. Check each CLI's
-`--help` for the installed version.
+because the tier is part of the slug. `muse` keeps its sandbox and approval
+prompts on by default, and its headless options go after `exec`. Close stdin
+with `< /dev/null` on headless `grok` and `muse` runs: from a backgrounded
+shell they can otherwise exit with no output. Check each CLI's `--help` for
+the installed version.
 
 Without a second model available, substitute a fresh reviewer agent that did
-not author the diff. Weaker than a different model, still far better than
-self-review. Author and reviewer stay separate in every gate.
+not author the diff.
 
 ## Bake-Offs
 
-For a high-stakes task with uncertain solution shape, dispatch the same brief to
-two workers in separate worktrees. Pair model families by default: Codex on
+For a high-stakes task with uncertain solution shape, dispatch the same brief,
+with each worker's commit rule, to two workers in separate worktrees. Pair
+model families by default: Codex on
 `gpt-6.1-sol` against Claude Opus 5.5. Give a judge explicit criteria before
 dispatch, correctness first. The judge is the conductor, or a read-only Codex
 arbiter on `gpt-6.1-sol` at `xhigh`:
@@ -137,14 +108,14 @@ Use bake-offs sparingly because they double worker usage and add judge time.
 
 After every worker return:
 
-1. Parse the report.
-2. Have an agent that did not write the commit inspect its diff: the conductor
+1. Parse the report, and commit a Codex worker's reported changes.
+2. Have an agent that did not write the change inspect its diff: the conductor
    for high-risk or design-heavy work, otherwise an integration worker or a
    verifier from another model family (Sonnet 5.5 for Codex branches, Sol for
    Claude branches).
 3. Rerun the verification command from the brief.
 4. Update `CAMPAIGN.md`.
-5. Record a durable lesson in `LEARNINGS.md` when the result teaches something.
+5. Record durable lessons in `LEARNINGS.md` per the Campaign Memory rules.
 
 Re-verify after each merge to the campaign main line and after each squad hands
 back an integration branch.

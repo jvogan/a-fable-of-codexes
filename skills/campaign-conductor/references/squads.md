@@ -6,7 +6,7 @@ delegation.
 ## When To Use A Squad
 
 A Sol worker's leaf fan-out is not a squad: it runs inside one worktree and
-returns one commit, and the conductor dispatches it like any worker.
+ends as one commit, and the conductor dispatches it like any worker.
 
 Use a squad when several Sol workers must integrate with each other before the
 conductor needs the result, when the sub-goal needs design judgment or
@@ -18,12 +18,13 @@ Without intermediate integration, a squad only adds reporting overhead.
 
 ## Shape
 
-A squad is one Claude Opus 5.5 lead at high or xhigh effort that:
+A squad is one lead, by default Claude Opus 5.5 at high or xhigh, that:
 
 1. Receives a sub-goal and namespace from the conductor.
 2. Dispatches Sol workers with `codex exec`, one worktree each. Each Sol worker
    may fan out a leaf team inside its own worktree.
-3. Integrates the Sol branches into one squad integration branch.
+3. Commits each Sol worker's reported changes, then integrates the Sol
+   branches into one squad integration branch.
 4. Runs the squad verification command.
 5. Reports one structured result to the conductor.
 
@@ -39,29 +40,31 @@ lead suits a mechanical sub-goal.
 - Depth caps at three below the conductor: conductor -> Opus lead -> Sol
   workers -> leaves. A Sol worker the conductor dispatches directly has two
   levels: worker -> leaves.
-- Only Sol workers spawn leaves. Leaf briefs and role files forbid further
-  spawning; Codex workers carry the native spawn tools (nested `codex exec`
-  processes are sandbox-blocked; the native tools are not), so the rule has to
-  be stated.
+- Only Sol workers spawn leaves. The sandbox blocks nested `codex exec`
+  processes but not the native spawn tools every Codex worker carries, so leaf
+  briefs and role files must forbid further spawning.
 - Every lead brief states how many Sol workers run at once, and every Sol
   brief assigns each leaf a disjoint file group.
 - Branches and worktrees stay inside the squad namespace.
 - The squad lead verifies the integrated branch before reporting.
 - The conductor reruns verification when merging the squad branch.
 - One conductor fleet-table row tracks the squad integration branch.
-- The squad report must enumerate every Sol worker with status, commit sha,
-  leaf count, and verification evidence.
+- The squad report must list every Sol worker with status, commit sha, leaf
+  count, and verification evidence, then end with the `worker-result` JSON
+  block for the integration branch.
 - Squads live for one wave and clean up worker worktrees before reporting.
 
 ## Namespaces
 
 Assign an exclusive prefix:
 
-- Squad integration branch: `campaign/<squad>`
+- Squad integration branch: `campaign/<squad>/integration`
 - Sol worker branches: `campaign/<squad>/<subtask>`
 - Sol worker worktrees: `../wt-<squad>-<subtask>`
 
-The brief must forbid branches or paths outside the prefix.
+The brief must forbid branches or paths outside the prefix. Git cannot create
+`campaign/<squad>` beside `campaign/<squad>/<subtask>`, so no branch takes the
+bare prefix.
 
 ## Squad Lead Brief
 
@@ -79,5 +82,4 @@ Include:
 - Worktree cleanup requirement
 - Report schema
 
-Squad leads orchestrate. They may resolve small merge conflicts, but they should
-not write feature code.
+Squad leads may resolve small merge conflicts but must not write feature code.

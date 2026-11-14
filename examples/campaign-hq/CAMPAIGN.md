@@ -21,6 +21,6 @@ Status: phase 2 of 3: index pipeline merged; UI and highlighting in flight.
 ## Fleet (active dispatches)
 | Task | Worker | Branch | Worktree | Session | Dispatched | Status |
 |---|---|---|---|---|---|---|
-| Search palette | opus 5.5 | campaign/palette | ../wt-palette | agent:palette | 13:58 | in progress |
+| Search palette | opus 5.5 | campaign/palette | ../wt-palette | agent:palette | 13:58 | in progress, ~45 min expected |
 | Result highlighting | codex sol | campaign/highlight | ../wt-highlight | 019826f3-…-8b2c | 14:05 | running, ~30 min expected |
 | Ranking engine | codex sol (3 leaves: feature, grunt, critic) | campaign/ranking | (removed) | 0197f1aa-…-42d1 | 11:20 | merged, verified, worktree removed |

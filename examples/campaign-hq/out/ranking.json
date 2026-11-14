@@ -1,7 +1,7 @@
 {
   "status": "done",
   "branch": "campaign/ranking",
-  "commit": "9c41d7e",
+  "commit": "",
   "files_changed": [
     "src/search/engine.ts",
     "src/search/rank.ts",

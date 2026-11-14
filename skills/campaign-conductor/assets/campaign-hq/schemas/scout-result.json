@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "scout-result",
+  "type": "object",
+  "required": ["status", "summary", "findings", "blockers"],
+  "properties": {
+    "status": { "enum": ["done", "partial", "blocked", "failed"] },
+    "summary": { "type": "string" },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["claim", "file", "line"],
+        "properties": {
+          "claim": { "type": "string" },
+          "file": { "type": "string", "description": "repo-relative path, or a URL for research" },
+          "line": { "type": "integer", "description": "1-based line; 0 when the evidence is a whole file or a URL" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "blockers": { "type": "array", "items": { "type": "string" } }
+  },
+  "additionalProperties": false
+}

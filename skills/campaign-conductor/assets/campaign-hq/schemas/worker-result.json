@@ -15,7 +15,8 @@
       "properties": {
         "passed": { "type": "boolean" },
         "output_tail": { "type": "string" }
-      }
+      },
+      "additionalProperties": false
     },
     "blockers": { "type": "array", "items": { "type": "string" } }
   },

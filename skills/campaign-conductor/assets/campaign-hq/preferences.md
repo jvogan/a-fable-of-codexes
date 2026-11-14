@@ -1,7 +1,7 @@
 # Worker Routing Preferences
 <!-- Precedence: user's live instruction > this file > skill defaults.
      Update this file whenever the user states a preference. -->
-- Conductor: Claude Fable 5.1 at high effort, or Opus 5.5 at high when Fable is unavailable or the user chooses it
+- Conductor: Claude Fable 5.2 at high effort, or Opus 5.5 at high when Fable is unavailable or the user chooses it
 - Implementation, tests, debugging, refactors: Codex CLI on gpt-6.1-sol at high; the worker runs alone or fans out one leaf per disjoint file group
 - Leaves (role files in .codex/agents/): feature (gpt-6.1-sol, high) for bounded judgment work; critic (gpt-6.1-sol, high, read-only) for a second opinion on a sibling's diff; grunt (gpt-6-luna, xhigh) for mechanical work
 - UI/UX, design review, squad leads: Claude Opus 5.5 at high, or xhigh for hard calls; an Opus squad lead dispatches its own Sol workers
@@ -16,3 +16,4 @@
 - Model/effort overrides: user's live request wins; record requested worker, model, and reasoning level before dispatch
 - Check-in cadence: phase boundaries and plan-changing surprises
 - Permission envelope: record Codex sandbox/network/approval policy and Claude worker edit permissions at kickoff
+- Preflight: record CLI versions, login status, reachable Codex models, and the verification command result at kickoff
