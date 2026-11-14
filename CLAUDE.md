@@ -7,7 +7,7 @@ Claude Code skills for multi-agent orchestration. Each skill lives at
 ## Working on this repo
 
 - Run `python3 scripts/validate.py` and `npx --yes skills add . --list` after
-  editing any SKILL.md. CI runs both commands.
+  editing any SKILL.md. The repo has no CI, so these runs are the only check.
 - Keep each SKILL.md body under 500 lines. Add `references/` files only when
   content outgrows the main file.
 - Improve skills by replacing or tightening existing text. Appending grows
