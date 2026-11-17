@@ -53,7 +53,7 @@ advising.
 
 When the user explicitly asks for an exceptional effort on a rare, very hard
 question, run the same command with
-`-m gpt-6.2-astra -c model_reasoning_effort=max`. Give Astra the question, the
+`-m gpt-6.2-astra -c model_reasoning_effort=xhigh`. Give Astra the question, the
 relevant files, and the conductor's current answer, and ask for an independent
 answer with its reasoning and every obstacle it could not resolve. The
 conductor weighs both; Astra's answer does not override verification.

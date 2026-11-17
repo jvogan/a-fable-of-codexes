@@ -102,7 +102,7 @@ Read-only scout with live web search:
 
 ```bash
 codex exec --json -s read-only \
-  -m gpt-6.1-terra -c model_reasoning_effort=max \
+  -m gpt-6.1-terra -c model_reasoning_effort=xhigh \
   -c approval_policy=never \
   -c web_search=live \
   --output-schema docs/campaign-hq/schemas/scout-result.json \
@@ -113,7 +113,7 @@ codex exec --json -s read-only \
 ```
 
 A sweep launches that command once per package, file group, or question, all
-in the background at once, with `-c model_reasoning_effort=xhigh`.
+in the background at once.
 
 `codex exec` enables web search by default, but in `cached` mode (an
 OpenAI-maintained index, no live fetch), so a scout needing the live web must
@@ -138,20 +138,20 @@ The fleet uses three Codex models:
 
 - `gpt-6.2-sol`: the campaign worker and the judgment leaves, at `high` in this
   skill.
-- `gpt-6.1-terra`: the mechanical leaf and scout model. It runs at `xhigh`
-  wherever many run at once (the `grunt` role, parallel sweeps) and at `max`
-  for a single deep scout.
+- `gpt-6.1-terra`: the mechanical leaf and scout model, at `xhigh` as the
+  `grunt` role and as every scout.
 - `gpt-6.2-astra`: the most capable model, outside the default fleet. At API
   rates it costs four times Sol per token, and OpenAI reports Sol nearly
   matching it on merge-ready code changes at about a fifth of the cost per
-  task. It runs at `max`, read-only, only when the user explicitly asks for an
-  exceptional effort on a rare, very hard question.
+  task. It runs at `xhigh`, read-only, only when the user explicitly asks for
+  an exceptional effort on a rare, very hard question.
 
 With no effort flag or config value, all three run at `low`.
 
-`ultra` is `max` plus automatic delegation, so a worker on `ultra` spawns its
-own subagents. No default shape uses it; run it only on an explicit request,
-never for a leaf, a consultant, or the Astra run.
+No default shape runs above `xhigh`. Run `max` or `ultra` only on an explicit
+request. `ultra` is `max` plus automatic delegation, so a worker on `ultra`
+spawns its own subagents; never use it for a leaf, a consultant, or the Astra
+run.
 
 Every shape the conductor or an Opus squad lead calls directly:
 
@@ -160,14 +160,13 @@ Every shape the conductor or an Opus squad lead calls directly:
 | Worker | `gpt-6.2-sol` | `high` | `workspace-write` | the default; runs alone or fans out a leaf team, one leaf per disjoint file group |
 | Consultant | `gpt-6.2-sol` | `high` | `read-only` | architecture answers, review of a Claude worker's diff |
 | Arbiter | `gpt-6.2-sol` | `xhigh` | `read-only` | bake-off judging, final arbitration between a critic and an author |
-| Scout | `gpt-6.1-terra` | `max` | `read-only`, `-c web_search=live` for research | one deep survey, current APIs, advisories |
-| Sweep scout | `gpt-6.1-terra` | `xhigh` | `read-only` | many in parallel, one per package, file group, or question |
-| Deep consult | `gpt-6.2-astra` | `max` | `read-only` | explicit user request only; one very hard question |
+| Scout | `gpt-6.1-terra` | `xhigh` | `read-only`, `-c web_search=live` for research | one deep survey, current APIs, advisories, or many in parallel, one per package, file group, or question |
+| Deep consult | `gpt-6.2-astra` | `xhigh` | `read-only` | explicit user request only; one very hard question |
 
-No shape or role runs below `high`. Raise a Sol worker to `xhigh` for a task
-that already failed at `high` or for thorny debugging, and record the change in
-the fleet table. A cheaper model on hard work produces rework, so give Terra
-mechanical work and read-only sweeps.
+Every shape and role runs at `high` or `xhigh`. Raise a Sol worker to `xhigh`
+for a task that already failed at `high` or for thorny debugging, and record
+the change in the fleet table. A cheaper model on hard work produces rework, so
+give Terra mechanical work and read-only sweeps.
 
 Codex gives `gpt-6.2-sol` and `gpt-6.1-terra` a 500K-token default context
 window and `gpt-6.2-astra` 272K, and compacts a session as it nears that limit.

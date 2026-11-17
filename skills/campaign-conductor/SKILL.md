@@ -16,7 +16,7 @@ license: MIT
 compatibility: Designed for Claude Code with Fable 5.2 or Opus 5.5 as conductor and Opus 5.5, Sonnet 5.5, and Haiku 5.5 subagents. OpenAI Codex CLI with GPT-6.2 Sol and GPT-6.1 Terra is expected; without it, route implementation to Claude workers. The agy, grok, and muse CLIs are optional reviewers.
 metadata:
   author: jvogan
-  version: "0.13.0"
+  version: "0.13.1"
 ---
 
 # Campaign Conductor
@@ -36,8 +36,8 @@ The default fleet has five kinds of direct reports:
   worker runs a task alone or fans out to a team of leaves through the shipped
   role files: `feature` and `critic` on Sol, `grunt` on `gpt-6.1-terra` at
   `xhigh`. The team is as large as the task splits into disjoint file groups.
-- **Codex Terra scouts** (`gpt-6.1-terra`) take bulk read-only work: `xhigh`
-  when many run at once, `max` for a single deep survey.
+- **Codex Terra scouts** (`gpt-6.1-terra` at `xhigh`) take bulk read-only
+  work, one at a time or many at once.
 - **Opus 5.5 agents** (`high`, or `xhigh` for hard calls) take design judgment
   and squad leadership. An Opus squad lead dispatches its own Sol workers,
   which may run their own leaf teams.
@@ -51,7 +51,7 @@ The default fleet has five kinds of direct reports:
 GPT-6.2 Astra is outside the default fleet. Use it only when the user explicitly
 asks for an exceptional effort on a rare, very hard question (for example "think
 as hard as you can and get an Astra second opinion"): one read-only
-`gpt-6.2-astra` run at `max`.
+`gpt-6.2-astra` run at `xhigh`.
 
 This skill is for Claude Code campaign sessions. If another runtime loads it,
 treat the Claude-specific Agent/Workflow instructions as a pattern and do not
@@ -157,17 +157,18 @@ express it, or get the user's consent to the closest available policy.
 | Cohesive sub-goal that needs its own integration branch or mid-flight steering | Claude Opus 5.5 squad lead at high or xhigh, running Sol workers | SendMessage steers a running lead. See [Squads](references/squads.md). |
 | Consultation: architecture questions, read-only review of a Claude worker's diff | Codex CLI on `gpt-6.2-sol` at `high`, read-only | See [Review gates](references/review-gates.md). |
 | Bake-off judging, final arbitration between a critic and an author | Codex CLI on `gpt-6.2-sol` at `xhigh`, read-only | Give it diffs and verification output, with criteria set before dispatch. |
-| Read-only surveys, cross-file search, research scouting | Claude Sonnet 5.5 at high or xhigh, or one Codex CLI scout on `gpt-6.1-terra` at `max` read-only (`-c web_search=live` for research) | Require file/line evidence in a `scout-result.json` report. |
+| Read-only surveys, cross-file search, research scouting | Claude Sonnet 5.5 at high or xhigh, or one Codex CLI scout on `gpt-6.1-terra` at `xhigh` read-only (`-c web_search=live` for research) | Require file/line evidence in a `scout-result.json` report. |
 | Quick lookups: a symbol's definition, call sites, errors in a worker's event stream | Claude Haiku 5.5 at high, read-only | Move a lookup that fails or needs synthesis across many files to Sonnet. |
 | Bulk read-only sweeps: one scout per package, file group, or question | Codex CLI on `gpt-6.1-terra` at `xhigh`, read-only, launched in parallel | Each scout returns a `scout-result.json` report. For a very wide sweep, one read-only Sol worker runs the scouts as `grunt` leaves and returns one synthesized report. |
-| Rare, very hard question on explicit user request | Codex CLI on `gpt-6.2-astra` at `max`, read-only | Never a default and never a writer. Record the request in the fleet table. |
+| Rare, very hard question on explicit user request | Codex CLI on `gpt-6.2-astra` at `xhigh`, read-only | Never a default and never a writer. Record the request in the fleet table. |
 | Second opinions from another model family | `agy` on `gemini-3.8-flash-high`, `grok` on `grok-4.7` at `xhigh`, or `muse` on `muse-spark-1.3-contributor` at `max` | Optional and read-only; a secondary review beside Claude and Codex. See [Review gates](references/review-gates.md). |
 | Codex unavailable or rate-limited | Claude Sonnet 5.5 workers at high or xhigh; Opus 5.5 at high or xhigh for design and for tasks that fail twice on Sonnet | Keep the same brief contract, worktree isolation, report schema, and verification gates; a Claude worker commits its own work. |
 
-No default, role file, or fallback runs below `high`. Opus 5.5 and Sonnet 5.5
-subagents run at `high` and step up to `xhigh` for hard design calls, thorny
-debugging, or a task that failed at `high`. Haiku 5.5 runs at `high`. Codex
-shapes run at `high`, `xhigh`, or `max`.
+No default, role file, or fallback runs below `high` or above `xhigh`. Opus
+5.5 and Sonnet 5.5 subagents run at `high` and step up to `xhigh` for hard
+design calls, thorny debugging, or a task that failed at `high`. Haiku 5.5
+runs at `high`. Codex shapes run at `high` or `xhigh`; `max` and `ultra` run
+only on an explicit request.
 
 Name the model and effort on every Claude dispatch. A subagent dispatched
 without a model inherits the conductor's by default, so under a Fable

@@ -31,8 +31,8 @@ the repo, so a later session resumes mid-campaign without setup.
 | Leaf | `feature`: Sol `high`; `critic`: Sol `high`, read-only; `grunt`: `gpt-6.1-terra` `xhigh` | Takes one slice of a Sol worker's task: judgment work, review of a sibling's diff, or mechanical work. |
 | Design agent and squad lead | Claude Opus 5.5, high or xhigh | Designs UI/UX and reviews design; leads a squad of Sol workers toward one integration branch. |
 | Consultant and arbiter | Codex `gpt-6.2-sol`, `high` or `xhigh`, read-only | Reviews Claude diffs, answers architecture questions, judges bake-offs. |
-| Deep consult | Codex `gpt-6.2-astra`, `max`, read-only | Answers one rare, very hard question; runs only when you ask for an exceptional effort. |
-| Scout | Claude Sonnet 5.5, high or xhigh, or Codex `gpt-6.1-terra`: `max` for one deep scout, `xhigh` for many in parallel; read-only | Surveys the codebase, sweeps it package by package, and researches current APIs. |
+| Deep consult | Codex `gpt-6.2-astra`, `xhigh`, read-only | Answers one rare, very hard question; runs only when you ask for an exceptional effort. |
+| Scout | Claude Sonnet 5.5, high or xhigh, or Codex `gpt-6.1-terra` `xhigh`, one or many in parallel; read-only | Surveys the codebase, sweeps it package by package, and researches current APIs. |
 | Lookup | Claude Haiku 5.5, high, read-only | Finds a definition or its call sites, or scans a worker's event stream for errors, so the conductor's context stays free. |
 | Other-family reviewers (optional) | `agy` Gemini 3.8 Flash high, `grok` Grok 4.7 xhigh, `muse` Muse Spark 1.3 Contributor max | Give read-only second opinions from another model family. |
 
@@ -129,7 +129,7 @@ Direct it in plain language:
 - "add a phase for the billing migration"
 - "send tests to Opus from now on" (saved to `preferences.md`)
 - "think as hard as you can and get an Astra second opinion on this race
-  condition" (one read-only `gpt-6.2-astra` run at `max`)
+  condition" (one read-only `gpt-6.2-astra` run at `xhigh`)
 - "status" (reads the plan and fleet table)
 
 ## Requirements
@@ -150,8 +150,8 @@ Direct it in plain language:
   ```
 
   Effort runs `low`, `medium`, `high`, `xhigh`, `max`, `ultra`, and the skill
-  routes nothing below `high`. `ultra` delegates to subagents on its own, so
-  the skill uses it only when you ask.
+  routes everything at `high` or `xhigh`. It runs `max` or `ultra` only when
+  you ask; `ultra` also delegates to subagents on its own.
 
   Codex loads the leaf role files only in a trusted project, and trust also
   lets the project's MCP servers run commands outside the sandbox. The
