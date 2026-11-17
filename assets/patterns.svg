@@ -19,7 +19,7 @@
     <circle cx="60" cy="205" r="10" fill="none" stroke="#1e2a4a" stroke-width="2.5"/>
     <circle cx="110" cy="185" r="10" fill="none" stroke="#1e2a4a" stroke-width="2.5"/>
     <circle cx="160" cy="205" r="10" fill="none" stroke="#1e2a4a" stroke-width="2.5"/>
-    <text x="110" y="150" font-size="16" fill="#8a8a8a" text-anchor="middle">sonnet and luna scouts</text>
+    <text x="110" y="150" font-size="16" fill="#8a8a8a" text-anchor="middle">sonnet, haiku, terra scouts</text>
     <line x1="132" y1="306" x2="68" y2="217" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#a)"/>
     <line x1="142" y1="301" x2="114" y2="199" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#a)"/>
     <line x1="152" y1="300" x2="159" y2="219" stroke="#1a1a1a" stroke-width="1.5" marker-end="url(#a)"/>
@@ -189,6 +189,6 @@
     <circle cx="12" cy="0" r="12" fill="#e2694e"/><text x="34" y="7" font-size="20" fill="#555">Fable conductor</text>
     <circle cx="232" cy="0" r="12" fill="none" stroke="#e2694e" stroke-width="3"/><text x="254" y="7" font-size="20" fill="#555">Claude Opus agent</text>
     <circle cx="482" cy="0" r="12" fill="#1e2a4a"/><text x="504" y="7" font-size="20" fill="#555">Codex worker</text>
-    <circle cx="692" cy="0" r="10" fill="none" stroke="#1e2a4a" stroke-width="2.5"/><text x="714" y="7" font-size="20" fill="#555">Sonnet or Luna scout, read-only</text>
+    <circle cx="692" cy="0" r="10" fill="none" stroke="#1e2a4a" stroke-width="2.5"/><text x="714" y="7" font-size="20" fill="#555">Sonnet, Haiku, or Terra scout, read-only</text>
   </g>
 </svg>

@@ -7,7 +7,7 @@ Status: phase 2 of 3: index pipeline merged; UI and highlighting in flight.
 ### Phase 1: Index pipeline (done)
 - [x] Build-time indexer emitting `search-index.json` - worker: codex sol - verify: `npm run build && node scripts/check-index.mjs`
 - [x] Tokenizer handling code identifiers (camelCase, snake_case) - worker: codex sol - verify: `npm test -- tokenizer`
-- [x] Heading-anchor audit across all docs sections - worker: codex luna sweep (12 scouts at xhigh, one per section) - verify: every heading in the report has a file and line
+- [x] Heading-anchor audit across all docs sections - worker: codex terra sweep (12 scouts at xhigh, one per section) - verify: every heading in the report has a file and line
 
 ### Phase 2: Search UI
 - [x] Query engine with ranking (title > heading > body) - worker: codex sol (feature + grunt leaves, critic on the engine diff) - verify: `npm test -- ranking`

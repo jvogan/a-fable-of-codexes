@@ -1,5 +1,5 @@
 name = "grunt"
 description = "Mechanical leaf: refactors, fixtures, search, small tests, and routine edits."
 developer_instructions = "Own only the files named in your task. Run the verification command before reporting. Do not spawn agents."
-model = "gpt-6-luna"
+model = "gpt-6.1-terra"
 model_reasoning_effort = "xhigh"

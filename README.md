@@ -10,11 +10,11 @@
 
 A Claude Code skill that makes Claude the conductor of a fleet of OpenAI Codex
 workers. Claude Fable 5.2 plans the work, dispatches parallel Codex workers on
-GPT-6.1 Sol to implement it, and verifies every branch before it merges. Each
-Sol worker can run its own team of Sol and Luna agents, sized to the task, and
-wide GPT-6 Luna sweeps take bulk read-only work. Claude Opus 5.5 agents handle
-design and lead squads of Sol workers, and Claude Sonnet 5.5 agents survey the
-codebase.
+GPT-6.2 Sol to implement it, and verifies every branch before it merges. Each
+Sol worker can run its own team of Sol and GPT-6.1 Terra agents, sized to the
+task, and wide Terra sweeps take bulk read-only work. Claude Opus 5.5 agents
+handle design and lead squads of Sol workers, Claude Sonnet 5.5 agents survey
+the codebase, and Claude Haiku 5.5 agents take quick lookups.
 
 The conductor's context stays free for planning and judgment because workers
 spend their own context on implementation and routine verification, and the
@@ -27,12 +27,13 @@ the repo, so a later session resumes mid-campaign without setup.
 | Role | Model and effort | Job |
 |---|---|---|
 | Conductor | Claude Fable 5.2, high (or Opus 5.5, high) | Plans, dispatches, integrates, and verifies. Writes no feature code. |
-| Worker | Codex `gpt-6.1-sol`, `high` | Implements a task in its own worktree, alone or with a leaf team sized to the task. |
-| Leaf | `feature`: Sol `high`; `critic`: Sol `high`, read-only; `grunt`: `gpt-6-luna` `xhigh` | Takes one slice of a Sol worker's task: judgment work, review of a sibling's diff, or mechanical work. |
+| Worker | Codex `gpt-6.2-sol`, `high` | Implements a task in its own worktree, alone or with a leaf team sized to the task. |
+| Leaf | `feature`: Sol `high`; `critic`: Sol `high`, read-only; `grunt`: `gpt-6.1-terra` `xhigh` | Takes one slice of a Sol worker's task: judgment work, review of a sibling's diff, or mechanical work. |
 | Design agent and squad lead | Claude Opus 5.5, high or xhigh | Designs UI/UX and reviews design; leads a squad of Sol workers toward one integration branch. |
-| Consultant and arbiter | Codex `gpt-6.1-sol`, `high` or `xhigh`, read-only | Reviews Claude diffs, answers architecture questions, judges bake-offs. |
-| Deep consult | Codex `gpt-6-astra`, `max`, read-only | Answers one rare, very hard question; runs only when you ask for an exceptional effort. |
-| Scout | Claude Sonnet 5.5, high or xhigh, or Codex `gpt-6-luna`: `max` for one deep scout, `xhigh` for many in parallel; read-only | Surveys the codebase, sweeps it package by package, and researches current APIs. |
+| Consultant and arbiter | Codex `gpt-6.2-sol`, `high` or `xhigh`, read-only | Reviews Claude diffs, answers architecture questions, judges bake-offs. |
+| Deep consult | Codex `gpt-6.2-astra`, `max`, read-only | Answers one rare, very hard question; runs only when you ask for an exceptional effort. |
+| Scout | Claude Sonnet 5.5, high or xhigh, or Codex `gpt-6.1-terra`: `max` for one deep scout, `xhigh` for many in parallel; read-only | Surveys the codebase, sweeps it package by package, and researches current APIs. |
+| Lookup | Claude Haiku 5.5, high, read-only | Finds a definition or its call sites, or scans a worker's event stream for errors, so the conductor's context stays free. |
 | Other-family reviewers (optional) | `agy` Gemini 3.8 Flash high, `grok` Grok 4.7 xhigh, `muse` Muse Spark 1.3 Contributor max | Give read-only second opinions from another model family. |
 
 Without Codex, Sonnet 5.5 workers take the implementation role, Opus 5.5 takes
@@ -68,9 +69,9 @@ The skill is [campaign-conductor](skills/campaign-conductor/SKILL.md).
   collect, integrate, verify. A finished Codex session resumes with its
   context for small corrections.
 - **Leaf teams.** A Sol worker spawns `feature` (bounded judgment), `critic`
-  (read-only review), and `grunt` (mechanical, on Luna) leaves by role name. The
-  role files carry the model and effort, so briefs name roles and a new model
-  generation needs a one-line edit per file.
+  (read-only review), and `grunt` (mechanical, on Terra) leaves by role name.
+  The role files carry the model and effort, so briefs name roles and a new
+  model generation needs a one-line edit per file.
 - **Squads.** An Opus 5.5 lead runs several Sol workers toward one integration
   branch. Depth stops at conductor, lead, Sol worker, leaf; leaves never spawn.
 - **Review gates.** Every worker returns a fixed-schema JSON report. Codex
@@ -128,14 +129,14 @@ Direct it in plain language:
 - "add a phase for the billing migration"
 - "send tests to Opus from now on" (saved to `preferences.md`)
 - "think as hard as you can and get an Astra second opinion on this race
-  condition" (one read-only `gpt-6-astra` run at `max`)
+  condition" (one read-only `gpt-6.2-astra` run at `max`)
 - "status" (reads the plan and fleet table)
 
 ## Requirements
 
 - **Claude Code**, with Fable 5.2 or Opus 5.5 as the session model. The skill
-  uses the Agent and Workflow tools and runs Claude subagents on Opus 5.5 and
-  Sonnet 5.5.
+  uses the Agent and Workflow tools and runs Claude subagents on Opus 5.5,
+  Sonnet 5.5, and Haiku 5.5.
 - **OpenAI Codex CLI** ([github.com/openai/codex](https://github.com/openai/codex)).
   Install with `npm install -g @openai/codex` or `brew install codex`, then run
   `codex login`. ChatGPT-plan auth draws on plan usage, and limits vary by
@@ -144,13 +145,17 @@ Direct it in plain language:
   the default in `~/.codex/config.toml`:
 
   ```toml
-  model = "gpt-6.1-sol"
+  model = "gpt-6.2-sol"
   model_reasoning_effort = "high"
   ```
 
   Effort runs `low`, `medium`, `high`, `xhigh`, `max`, `ultra`, and the skill
-  routes nothing below `high`. Luna stops at `max`. `ultra` delegates to
-  subagents on its own, so the skill uses it only when you ask.
+  routes nothing below `high`. `ultra` delegates to subagents on its own, so
+  the skill uses it only when you ask.
+
+  Codex loads the leaf role files only in a trusted project, and trust also
+  lets the project's MCP servers run commands outside the sandbox. The
+  conductor asks at preflight before running `codex exec --trust`.
 - **Other agent CLIs** (optional). Each adds a model family for read-only
   second opinions and signs in with OAuth: the Antigravity CLI `agy`
   ([antigravity.google](https://antigravity.google)) on

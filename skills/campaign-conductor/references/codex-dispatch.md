@@ -23,8 +23,8 @@ Run once at campaign kickoff:
 ```bash
 codex --version
 codex login status
-codex exec -s read-only -m gpt-6.1-sol "Reply with the single word ok"
-codex exec -s read-only -m gpt-6-luna "Reply with the single word ok"
+codex exec -s read-only -m gpt-6.2-sol "Reply with the single word ok"
+codex exec -s read-only -m gpt-6.1-terra "Reply with the single word ok"
 ```
 
 Record the result in `preferences.md`. The smoke tests confirm the account can
@@ -32,6 +32,17 @@ reach the worker and leaf models; model rollouts are staged by plan, and
 Enterprise workspaces need an admin to enable them. If a model is rejected,
 auth fails, or limits are exhausted, route that work to Claude workers until
 the user changes the setup, and record the change.
+
+Run the smoke tests from the project root. Codex reads project-local
+configuration, including the `.codex/agents/` role files, only in a trusted
+project, and a linked worktree takes its main checkout's trust. If a smoke test
+prints `Untrusted project-local configuration is disabled`, a worker cannot
+spawn leaves by role and reports itself blocked. Trusting a parent folder does
+not cover a repository inside it, and a `-c` override does not grant trust.
+Trust also lets the project's MCP servers run commands outside the sandbox, so
+ask the user before granting it: they accept the trust prompt in an
+interactive `codex` session in the project root, or approve adding `--trust`
+to one smoke test. Trust persists; record it in the permission envelope.
 
 ## Worker Brief Contract
 
@@ -70,13 +81,14 @@ the envelope mid-run.
 Run every dispatch as a background command and read the `-o` report when it
 exits. The events file holds the `--json` stream: every command the worker ran
 and its output. Read only its first line, the `thread.started` event, whose
-`thread_id` is the session id.
+`thread_id` is the session id. When a worker fails or stalls, send a Haiku
+agent to find the failing command in the rest.
 
 One writer:
 
 ```bash
 codex exec --json -s workspace-write \
-  -m gpt-6.1-sol -c model_reasoning_effort=high \
+  -m gpt-6.2-sol -c model_reasoning_effort=high \
   -c approval_policy=never \
   -c sandbox_workspace_write.network_access=true \
   --output-schema docs/campaign-hq/schemas/worker-result.json \
@@ -90,7 +102,7 @@ Read-only scout with live web search:
 
 ```bash
 codex exec --json -s read-only \
-  -m gpt-6-luna -c model_reasoning_effort=max \
+  -m gpt-6.1-terra -c model_reasoning_effort=max \
   -c approval_policy=never \
   -c web_search=live \
   --output-schema docs/campaign-hq/schemas/scout-result.json \
@@ -124,14 +136,18 @@ reasoning effort (`low`, `medium`, `high`, `xhigh`, `max`, `ultra`), and the
 optional `fast` service tier, which runs about twice as fast for more usage.
 The fleet uses three Codex models:
 
-- `gpt-6.1-sol`: the campaign worker and the judgment leaves, at `high` in this
-  skill. With no effort flag or config value it runs at `low`.
-- `gpt-6-luna`: the mechanical leaf and bulk scout model. It runs at `xhigh`
+- `gpt-6.2-sol`: the campaign worker and the judgment leaves, at `high` in this
+  skill.
+- `gpt-6.1-terra`: the mechanical leaf and scout model. It runs at `xhigh`
   wherever many run at once (the `grunt` role, parallel sweeps) and at `max`
-  for a single deep scout. Efforts stop at `max`.
-- `gpt-6-astra`: the most capable model, outside the default fleet. It runs at
-  `max`, read-only, only when the user explicitly asks for an exceptional
-  effort on a rare, very hard question.
+  for a single deep scout.
+- `gpt-6.2-astra`: the most capable model, outside the default fleet. At API
+  rates it costs four times Sol per token, and OpenAI reports Sol nearly
+  matching it on merge-ready code changes at about a fifth of the cost per
+  task. It runs at `max`, read-only, only when the user explicitly asks for an
+  exceptional effort on a rare, very hard question.
+
+With no effort flag or config value, all three run at `low`.
 
 `ultra` is `max` plus automatic delegation, so a worker on `ultra` spawns its
 own subagents. No default shape uses it; run it only on an explicit request,
@@ -141,21 +157,25 @@ Every shape the conductor or an Opus squad lead calls directly:
 
 | Shape | Model | Effort | Sandbox | Use |
 |---|---|---|---|---|
-| Worker | `gpt-6.1-sol` | `high` | `workspace-write` | the default; runs alone or fans out a leaf team, one leaf per disjoint file group |
-| Consultant | `gpt-6.1-sol` | `high` | `read-only` | architecture answers, review of a Claude worker's diff |
-| Arbiter | `gpt-6.1-sol` | `xhigh` | `read-only` | bake-off judging, final arbitration between a critic and an author |
-| Scout | `gpt-6-luna` | `max` | `read-only`, `-c web_search=live` for research | one deep survey, current APIs, advisories |
-| Sweep scout | `gpt-6-luna` | `xhigh` | `read-only` | many in parallel, one per package, file group, or question |
-| Deep consult | `gpt-6-astra` | `max` | `read-only` | explicit user request only; one very hard question |
+| Worker | `gpt-6.2-sol` | `high` | `workspace-write` | the default; runs alone or fans out a leaf team, one leaf per disjoint file group |
+| Consultant | `gpt-6.2-sol` | `high` | `read-only` | architecture answers, review of a Claude worker's diff |
+| Arbiter | `gpt-6.2-sol` | `xhigh` | `read-only` | bake-off judging, final arbitration between a critic and an author |
+| Scout | `gpt-6.1-terra` | `max` | `read-only`, `-c web_search=live` for research | one deep survey, current APIs, advisories |
+| Sweep scout | `gpt-6.1-terra` | `xhigh` | `read-only` | many in parallel, one per package, file group, or question |
+| Deep consult | `gpt-6.2-astra` | `max` | `read-only` | explicit user request only; one very hard question |
 
 No shape or role runs below `high`. Raise a Sol worker to `xhigh` for a task
 that already failed at `high` or for thorny debugging, and record the change in
-the fleet table. A cheap model on hard work produces rework, so give Luna
+the fleet table. A cheaper model on hard work produces rework, so give Terra
 mechanical work and read-only sweeps.
 
-Above 272K input tokens the API adds a long-context premium. The CLI compacts
-near that point unless `auto_compact_token_limit` is raised, so raise it only
-for a task that needs a larger window.
+Codex gives `gpt-6.2-sol` and `gpt-6.1-terra` a 500K-token default context
+window and `gpt-6.2-astra` 272K, and compacts a session as it nears that limit.
+`model_context_window` raises the limit; raise it only for a task that needs
+more, since every turn resends the context. With API-key auth, earlier Sol
+models billed a request above 272K input tokens at long-context rates for the
+whole request, and a 500K window lets a session cross that line without any
+config change.
 
 Precedence is the user's live request, then `preferences.md`, then the skill
 defaults, bounded by what the active CLI and account support. A live request
@@ -182,24 +202,25 @@ unless a role sets them. A role is a standalone TOML file under `.codex/agents/`
 - <https://learn.chatgpt.com/docs/config-file/config-reference>
 - <https://learn.chatgpt.com/docs/agent-configuration/subagents>
 
-Bootstrap copies three roles from the skill's `assets/codex-agents/`, and
-a campaign can edit them, add roles, or ignore them. Roles are named for the
-job, so the next model generation needs a one-line edit per file:
+Bootstrap copies three roles from the skill's `assets/codex-agents/`, and a
+campaign can edit them, add roles, or ignore them. Codex loads them only in a
+trusted project (see Preflight). Roles are named for the job, so the next model
+generation needs a one-line edit per file:
 
 ```toml
 # .codex/agents/grunt.toml
 name = "grunt"
 description = "Mechanical leaf: refactors, fixtures, search, small tests, and routine edits."
 developer_instructions = "Own only the files named in your task. Run the verification command before reporting. Do not spawn agents."
-model = "gpt-6-luna"
+model = "gpt-6.1-terra"
 model_reasoning_effort = "xhigh"
 ```
 
 | Role | Model | Effort | Sandbox | Leaf work |
 |---|---|---|---|---|
-| `feature` | `gpt-6.1-sol` | `high` | inherited | A bounded sub-feature, bug fix, or test suite that needs design care. |
-| `critic` | `gpt-6.1-sol` | `high` | `read-only`, set in the file | Second opinion on a sibling leaf's diff from a fresh session; it cannot patch what it reviews. |
-| `grunt` | `gpt-6-luna` | `xhigh` | inherited | Mechanical refactors, fixtures, search, small tests. Move a task that fails verification twice to `feature`. |
+| `feature` | `gpt-6.2-sol` | `high` | inherited | A bounded sub-feature, bug fix, or test suite that needs design care. |
+| `critic` | `gpt-6.2-sol` | `high` | `read-only`, set in the file | Second opinion on a sibling leaf's diff from a fresh session; it cannot patch what it reviews. |
+| `grunt` | `gpt-6.1-terra` | `xhigh` | inherited | Mechanical refactors, fixtures, search, small tests. Move a task that fails verification twice to `feature`. |
 
 A Sol brief can name roles instead of models: "spawn a `feature` leaf for the
 parser rewrite, a `grunt` leaf for the fixture updates, then a `critic` on the
@@ -212,7 +233,7 @@ default does not throttle a wide team:
 ```bash
 codex exec --json -s workspace-write \
   -c approval_policy=never \
-  -m gpt-6.1-sol -c model_reasoning_effort=high \
+  -m gpt-6.2-sol -c model_reasoning_effort=high \
   -c agents.max_concurrent_threads_per_session=<team-size> \
   --output-schema docs/campaign-hq/schemas/worker-result.json \
   -C <worktree> \
@@ -246,7 +267,7 @@ Sol brief must forbid its leaves from spawning further agents.
 | Live web search | `-c web_search=live` (default is `cached`, an index with no live fetch; `codex exec` has no `--search` flag) | volatile facts, current APIs, advisories, versions |
 | Image input | `-i current.png -i target.png` | UI bug reproduction from screenshots and mocks |
 | Image generation | prompt the built-in `image_gen` tool | asset generation; the tool saves under `~/.codex/generated_images/<session>/`, so the brief must require copying the file into the repo and verifying it exists |
-| Review mode | `codex exec review --base <ref> -m gpt-6.1-sol -c model_reasoning_effort=high` | read-only review gate in the consultant shape |
+| Review mode | `codex exec review --base <ref> -m gpt-6.2-sol -c model_reasoning_effort=high` | read-only review gate in the consultant shape |
 | Session continuation | `codex exec resume <session-id> "<correction>"` | incremental steering after a finished run |
 | Native subagents | prompt the built-in multi-agent tools (`spawn_agent`, `wait_agent`, `send_input`, `close_agent`); role files in `.codex/agents/` set each leaf's model and effort; leaves without a role inherit the worker's | a Sol worker fans out a leaf team inside one workspace; see Sol Worker And Leaves above |
 

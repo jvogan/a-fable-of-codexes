@@ -31,7 +31,7 @@ Codex, plus Gemini, Grok, and Muse through their OAuth-backed CLIs.
 - After a Codex worker returns a high-risk diff, dispatch a Claude Opus 5.5
   reviewer or a review from one of the other CLIs.
 - After a Claude worker returns a high-risk diff, run a Codex consultation:
-  read-only on `gpt-6.1-sol` at `high`.
+  read-only on `gpt-6.2-sol` at `high`.
 - After each wave integration, review the merged result to catch semantic
   conflicts that appear only after individually valid branches combine.
 
@@ -41,7 +41,7 @@ security boundaries, persistent storage, or broad refactors.
 A Codex consultation is also the shape for architecture questions:
 
 ```bash
-codex exec -s read-only -m gpt-6.1-sol -c model_reasoning_effort=high \
+codex exec -s read-only -m gpt-6.2-sol -c model_reasoning_effort=high \
   -C "$PWD" - < docs/campaign-hq/briefs/<task>.md
 ```
 
@@ -53,14 +53,14 @@ advising.
 
 When the user explicitly asks for an exceptional effort on a rare, very hard
 question, run the same command with
-`-m gpt-6-astra -c model_reasoning_effort=max`. Give Astra the question, the
+`-m gpt-6.2-astra -c model_reasoning_effort=max`. Give Astra the question, the
 relevant files, and the conductor's current answer, and ask for an independent
-answer with its reasoning. The conductor weighs both; Astra's answer does not
-override verification.
+answer with its reasoning and every obstacle it could not resolve. The
+conductor weighs both; Astra's answer does not override verification.
 
 For a read-only review from another model family, use whichever CLI the user
-has. These reviewers are optional and roughly Luna-tier; use them only as a
-secondary review from a different model family:
+has. These reviewers are optional; use them only as a secondary review from a
+different model family:
 
 ```bash
 agy --model gemini-3.8-flash-high --mode plan --sandbox \
@@ -90,12 +90,12 @@ not author the diff.
 For a high-stakes task with uncertain solution shape, dispatch the same brief,
 with each worker's commit rule, to two workers in separate worktrees. Pair
 model families by default: Codex on
-`gpt-6.1-sol` against Claude Opus 5.5. Give a judge explicit criteria before
+`gpt-6.2-sol` against Claude Opus 5.5. Give a judge explicit criteria before
 dispatch, correctness first. The judge is the conductor, or a read-only Codex
-arbiter on `gpt-6.1-sol` at `xhigh`:
+arbiter on `gpt-6.2-sol` at `xhigh`:
 
 ```bash
-codex exec -s read-only -m gpt-6.1-sol -c model_reasoning_effort=xhigh \
+codex exec -s read-only -m gpt-6.2-sol -c model_reasoning_effort=xhigh \
   -C "$PWD" - < docs/campaign-hq/briefs/<task>-judge.md
 ```
 

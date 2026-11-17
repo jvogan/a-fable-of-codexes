@@ -1,5 +1,5 @@
 name = "feature"
 description = "Judgment leaf: a bounded sub-feature, bug fix, or test suite that needs design care."
 developer_instructions = "Own only the files named in your task. Run the verification command before reporting. Do not spawn agents."
-model = "gpt-6.1-sol"
+model = "gpt-6.2-sol"
 model_reasoning_effort = "high"
